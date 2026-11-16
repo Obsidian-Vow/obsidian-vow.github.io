@@ -91,7 +91,7 @@ window.CONFIG = {
       {
         "name": "보스룸",
         "desc": "세 번째 배경 설명을 적어 주세요.",
-        "thumb": "",
+        "thumb": "assets/bossroom-thumb.jpg",
         "spots": [
           {
             "name": "시점 1",
@@ -100,7 +100,9 @@ window.CONFIG = {
             "yaw": 0,
             "links": []
           }
-        ]
+        ],
+        "model": "assets/boss_room.glb",
+        "yaw": 0
       }
     ]
   },

@@ -694,6 +694,7 @@ import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
 import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+import { MeshoptDecoder } from "three/addons/libs/meshopt_decoder.module.js";
 
 const C = window.CONFIG;
 const vp = document.getElementById("viewport");
@@ -903,11 +904,61 @@ window.initWorld = async function(place){
   wPlace = place || 0; W = WD.places[wPlace]; wCur = -1; busy = false; auto = true;
   document.getElementById("wEyebrow").textContent = W.name || "Background";
   document.getElementById("wSwitch").hidden = WD.places.length < 2;
-  buildSpots();
   wResize();
-  wr.setAnimationLoop(wLoop);
-  await goSpot(0, true);
+  if (W.model){
+    await showModel(W);
+  } else {
+    hideModels();
+    buildSpots();
+    wr.setAnimationLoop(wLoop);
+    await goSpot(0, true);
+  }
 };
+/* ---- 3D 모델 배경: 모델 안에 서서 둘러보기 ---- */
+const modelCache = {}; let curModel = null, eye = new THREE.Vector3(), modelLights = null;
+function hideModels(){
+  Object.values(modelCache).forEach(o => o.visible = false); curModel = null;
+  meshA.visible = meshB.visible = true;
+  wr.toneMapping = THREE.NoToneMapping; ws.environment = null;
+  if (modelLights) modelLights.visible = false;
+  wc.position.set(0, 0, 0);
+}
+function loadModel(url){
+  if (modelCache[url]) return Promise.resolve(modelCache[url]);
+  const L = new GLTFLoader(); L.setMeshoptDecoder(MeshoptDecoder);
+  return new Promise((res, rej) => L.load(url, g => { modelCache[url] = g.scene; ws.add(g.scene); res(g.scene); }, undefined, rej));
+}
+async function showModel(P){
+  const eyebrowGate = document.querySelector("#gate .eyebrow");
+  if (eyebrowGate) eyebrowGate.textContent = "Loading…";
+  let obj;
+  try { obj = await loadModel(P.model); }
+  catch(e){ if (eyebrowGate) eyebrowGate.textContent = "Enter"; P.model = ""; hideModels(); buildSpots(); wr.setAnimationLoop(wLoop); await goSpot(0, true); return; }
+  if (eyebrowGate) eyebrowGate.textContent = "Enter";
+  Object.values(modelCache).forEach(o => o.visible = (o === obj)); curModel = obj;
+  meshA.visible = meshB.visible = false;
+  if (!modelLights){
+    modelLights = new THREE.Group();
+    modelLights.add(new THREE.HemisphereLight(0xfff0dd, 0x302020, 1.3));
+    const warm = new THREE.PointLight(0xffc98a, 6, 0, 1.6); warm.position.set(0, 2.2, 0); modelLights.add(warm);
+    ws.add(modelLights);
+    ws.userData.env = new THREE.PMREMGenerator(wr).fromScene(new RoomEnvironment(), 0.04).texture;
+  }
+  modelLights.visible = true;
+  ws.environment = ws.userData.env; ws.environmentIntensity = 0.6;
+  wr.toneMapping = THREE.ACESFilmicToneMapping; wr.toneMappingExposure = +P.exposure || 1.25;
+  const box = new THREE.Box3().setFromObject(obj), sz = box.getSize(new THREE.Vector3()), c = box.getCenter(new THREE.Vector3());
+  eye.set(c.x, box.min.y + sz.y * (+P.eye || 0.35), c.z);
+  modelLights.children[1].position.set(c.x, box.min.y + sz.y * 0.55, c.z);
+  wc.near = Math.max(0.005, sz.length() / 2000); wc.far = sz.length() * 4; wc.position.copy(eye);
+  lon = +P.yaw || 0; lat = -12; fov = 75;
+  document.getElementById("wName").textContent = P.name || "";
+  document.getElementById("wDesc").textContent = P.desc || "";
+  document.getElementById("wSpots").hidden = true;
+  document.getElementById("wPrev").hidden = document.getElementById("wNext").hidden = true;
+  hsEl.innerHTML = "";
+  wr.setAnimationLoop(wLoop);
+}
 function wResize(){
   if (!wr) return;
   const w = panoEl.clientWidth, h = panoEl.clientHeight; if (!w || !h) return;
@@ -987,7 +1038,8 @@ function wLoop(){
   if (document.body.dataset.view !== "world"){ wr.setAnimationLoop(null); return; }
   if (auto && !busy) lon += 0.025;
   wc.fov = fov; wc.updateProjectionMatrix();
-  wc.lookAt(dirOf(lon, lat));
+  if (curModel){ wc.position.copy(eye); wc.lookAt(tmpV.copy(eye).add(dirOf(lon, lat))); }
+  else wc.lookAt(dirOf(lon, lat));
   wr.render(ws, wc);
   yawOut.textContent = "방향 " + Math.round(((lon % 360) + 360) % 360) + "°";
   const w = panoEl.clientWidth, h = panoEl.clientHeight, fwd = dirOf(lon, lat);

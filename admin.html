@@ -241,7 +241,14 @@ if (!window.CONFIG) document.body.innerHTML = '<p style="padding:40px">content.j
           <div class="pv" style="aspect-ratio:4/5;max-height:160px">${(preview["world.places."+p+".thumb"] || pl.thumb) ? `<img src="${esc(preview["world.places."+p+".thumb"] || pl.thumb)}" alt="">` : "첫 시점 이미지 사용"}</div>
           <div class="ed-bar"><label class="upl mini">카드 이미지 선택 (선택)<input type="file" accept="image/*" data-upload="world.places.${p}.thumb"></label></div>
         </div>
-        ${pl.spots.map((sp, i) => { const P = `world.places.${p}.spots.${i}`; return `
+        <div class="ed-card inner">
+          <strong style="font-size:14px">3D 모델로 보여 주기 (선택)</strong>
+          <p class="ed-help">GLB 모델을 넣으면 360도 이미지 대신 모델 안 가운데에 서서 둘러보게 됩니다. 비워 두면 아래 360도 이미지를 씁니다.</p>
+          <div class="ed-bar"><label class="upl mini">GLB 선택<input type="file" accept=".glb" data-upload="world.places.${p}.model"></label></div>
+          ${input("모델 경로", `world.places.${p}.model`, { ph:"assets/boss_room.glb" })}
+          <div class="ed-row2">${input("눈높이 (0~1, 기본 0.35)", `world.places.${p}.eye`, { type:"number" })}${input("밝기 (기본 1.25)", `world.places.${p}.exposure`, { type:"number" })}</div>
+        </div>
+        ${pl.model ? "" : pl.spots.map((sp, i) => { const P = `world.places.${p}.spots.${i}`; return `
         <div class="ed-card inner">
           <div class="ed-bar"><span class="grow">${esc(sp.name || "새 시점")}</span>${btn("↑","up",P)}${btn("↓","down",P)}${btn("삭제","del",P,"danger")}</div>
           ${input("시점 이름", P+".name")}
@@ -269,7 +276,7 @@ if (!window.CONFIG) document.body.innerHTML = '<p style="padding:40px">content.j
             <div>${btn("+ 이동 버튼 추가","addlink",p+"."+i)}</div>
           </div>` : ""}
         </div>`; }).join("")}
-        <div>${btn("+ 시점 추가","addspot",p)}</div>
+        ${pl.model ? "" : `<div>${btn("+ 시점 추가","addspot",p)}</div>`}
       </div>`).join("")}
       <div>${btn("+ 배경 추가","addplace")}</div>`,
 
