@@ -8,12 +8,9 @@ window.CONFIG = {
   "logo": "assets/logo.png",
   "video": "",
   "ticket": {
+    "image": "",
     "hall": "제1상영관",
-    "runtime": "05:00",
-    "prefix": "BC",
-    "rows": "ABCDEFGH",
-    "perRow": 12,
-    "note": "상영 중 촬영과 통화는 삼가 주세요"
+    "runtime": "05:00"
   },
   "info": [
     [
@@ -169,26 +166,46 @@ window.CONFIG = {
           ]
         }
       ]
+    },
+    {
+      "dept": "사운드",
+      "en": "Sound",
+      "people": [
+        {
+          "name": "사운드 업체명",
+          "roles": [
+            "사운드 디자인"
+          ],
+          "work": []
+        },
+        {
+          "name": "음원 출처 / 작곡가",
+          "roles": [
+            "음악"
+          ],
+          "work": []
+        }
+      ]
+    },
+    {
+      "dept": "감사한 분들",
+      "en": "Special Thanks",
+      "people": [
+        {
+          "name": "교수님 성함",
+          "roles": [
+            "지도교수"
+          ],
+          "work": []
+        },
+        {
+          "name": "이름",
+          "roles": [
+            "도움 주신 분"
+          ],
+          "work": []
+        }
+      ]
     }
-  ],
-  "sound": [
-    [
-      "사운드 디자인",
-      "사운드 업체명"
-    ],
-    [
-      "음악",
-      "음원 출처 / 작곡가"
-    ]
-  ],
-  "thanks": [
-    [
-      "지도교수",
-      "교수님 성함"
-    ],
-    [
-      "도움 주신 분",
-      "이름"
-    ]
   ]
 };

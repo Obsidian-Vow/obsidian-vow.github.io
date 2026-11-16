@@ -179,30 +179,37 @@ if (!window.CONFIG) document.body.innerHTML = '<p style="padding:40px">content.j
       </div>`,
 
     ticket: () => `
-      <p class="ed-help">관람객이 발권할 때 찍혀 나오는 내용입니다. 이름과 좌석은 관람객마다 자동으로 정해집니다.</p>
-      <div class="ed-row2">${input("상영관 이름", "ticket.hall", { ph:"제1상영관" })}${input("러닝타임", "ticket.runtime", { ph:"05:00" })}</div>
-      <div class="ed-row2">${input("티켓 번호 앞 글자", "ticket.prefix", { ph:"BC" })}${input("한 줄 좌석 수", "ticket.perRow", { type:"number" })}</div>
-      ${input("좌석 줄 (글자마다 한 줄)", "ticket.rows", { ph:"ABCDEFGH" })}
-      ${input("티켓 하단 문구", "ticket.note", { ph:"상영 중 촬영과 통화는 삼가 주세요" })}`,
+      <div class="ed-card">
+        <strong>티켓 이미지</strong>
+        <p class="ed-help">직접 디자인한 티켓 이미지(PNG/JPG)를 고르면 이 이미지가 매표소에서 뽑혀 나옵니다. 가로로 긴 티켓이 가장 자연스럽습니다. 비워 두면 기본 티켓이 나옵니다.</p>
+        <div class="ed-media">
+          <div class="pv">${preview.ticket ? `<img src="${esc(preview.ticket)}" alt="티켓 미리보기">` : esc(draft.ticket.image || "기본 티켓")}</div>
+          <div class="ed-bar"><label class="upl mini">이미지 선택<input type="file" accept="image/*" data-upload="ticket.image"></label></div>
+        </div>
+        ${input("티켓 이미지 경로", "ticket.image", { ph:"assets/ticket.png" })}
+      </div>
+      <div class="ed-card">
+        <strong>상영관 정보</strong>
+        <p class="ed-help">발권 완료 문구와 기본 티켓에 쓰입니다.</p>
+        <div class="ed-row2">${input("상영관 이름", "ticket.hall", { ph:"제1상영관" })}${input("러닝타임", "ticket.runtime", { ph:"05:00" })}</div>
+      </div>`,
 
     credits: () => `
-      <p class="ed-help">역할은 쉼표로, 상세 작업은 줄바꿈으로 구분합니다.</p>
+      <p class="ed-help">파트(사운드, 감사한 분들 포함)를 자유롭게 만들고 이름을 붙일 수 있습니다. 맡은 일은 쉼표로, 상세 작업은 줄바꿈으로 구분합니다. 비워 둔 칸은 사이트에 나오지 않습니다.</p>
       ${draft.credits.map((d, i) => `
         <div class="ed-card">
-          <div class="ed-bar"><span class="grow">${esc(d.dept || "새 부서")}</span>${btn("↑","up",`credits.${i}`)}${btn("↓","down",`credits.${i}`)}${btn("부서 삭제","del",`credits.${i}`,"danger")}</div>
-          <div class="ed-row2">${input("부서 이름", `credits.${i}.dept`)}${input("영문 (작게 표시)", `credits.${i}.en`)}</div>
+          <div class="ed-bar"><span class="grow">${esc(d.dept || "새 파트")}</span>${btn("↑","up",`credits.${i}`)}${btn("↓","down",`credits.${i}`)}${btn("파트 삭제","del",`credits.${i}`,"danger")}</div>
+          <div class="ed-row2">${input("파트 이름", `credits.${i}.dept`, { ph:"예: 애니메이션" })}${input("영문 (선택)", `credits.${i}.en`, { ph:"Animation" })}</div>
           ${d.people.map((p, j) => `
             <div class="ed-card inner">
               <div class="ed-bar"><span class="grow">${esc(p.name || "새 사람")}</span>${btn("↑","up",`credits.${i}.people.${j}`)}${btn("↓","down",`credits.${i}.people.${j}`)}${btn("삭제","del",`credits.${i}.people.${j}`,"danger")}</div>
               ${input("이름", `credits.${i}.people.${j}.name`)}
-              ${input("역할", `credits.${i}.people.${j}.roles`, { kind:"csv", ph:"애니메이션, 편집" })}
-              ${input("상세 작업", `credits.${i}.people.${j}.work`, { kind:"lines", rows:3 })}
+              ${input("맡은 일", `credits.${i}.people.${j}.roles`, { kind:"csv", ph:"전투씬 애니메이션, 최종 편집" })}
+              ${input("상세 작업 (선택, 줄마다 하나)", `credits.${i}.people.${j}.work`, { kind:"lines", rows:3 })}
             </div>`).join("")}
           <div>${btn("+ 사람 추가","addperson",i)}</div>
         </div>`).join("")}
-      <div>${btn("+ 부서 추가","adddept")}</div>
-      <div class="ed-card"><strong>사운드</strong>${pairRows("sound","역할","이름 / 업체")}</div>
-      <div class="ed-card"><strong>감사한 분들</strong>${pairRows("thanks","관계","이름")}</div>`,
+      <div>${btn("+ 파트 추가","adddept")}</div>`,
 
     chars: () => `
       <p class="ed-help">3D 모델은 텍스처가 들어간 .glb 파일로 올려 주세요. 모델이 없으면 임시 캐릭터가 나옵니다.</p>
@@ -258,6 +265,7 @@ if (!window.CONFIG) document.body.innerHTML = '<p style="padding:40px">content.j
     const f = el.files[0], path = "assets/" + f.name.replace(/\s+/g, "-");
     setAt(draft, key, path);
     if (key === "logo") preview.logo = URL.createObjectURL(f);
+    if (key === "ticket.image") preview.ticket = URL.createObjectURL(f);
     needed.set(path, { name: f.name, size: f.size });
     say(`‘${f.name}’ → assets 폴더에 ${path.slice(7)} 이름으로 올려 주세요.`);
     render(); renderOut();
@@ -286,8 +294,13 @@ if (!window.CONFIG) document.body.innerHTML = '<p style="padding:40px">content.j
 
   function open(){
     draft = JSON.parse(JSON.stringify(window.CONFIG));
-    draft.ticket = Object.assign({ hall:"제1상영관", runtime:"05:00", prefix:"BC", rows:"ABCDEFGH", perRow:12, note:"" }, draft.ticket);
-    ["info","sound","thanks","credits","characters"].forEach(k => draft[k] = draft[k] || []);
+    draft.ticket = Object.assign({ image:"", hall:"제1상영관", runtime:"05:00" }, draft.ticket);
+    ["prefix","rows","perRow","note"].forEach(k => delete draft.ticket[k]);
+    ["info","credits","characters"].forEach(k => draft[k] = draft[k] || []);
+    [["sound","사운드","Sound"],["thanks","감사한 분들","Special Thanks"]].forEach(([k, dept, en]) => {
+      if (draft[k] && draft[k].length) draft.credits.push({ dept, en, people: draft[k].map(([r, n]) => ({ name:n, roles:[r], work:[] })) });
+      delete draft[k];
+    });
     say("내용을 고친 뒤 content.js를 내려받으세요.");
     render(); ED.classList.add("on");
   }
