@@ -62,7 +62,7 @@ window.CONFIG = {
     "places": [
       {
         "name": "성 홀",
-        "desc": "첫 번째 배경 설명을 적어 주세요.",
+        "desc": "",
         "thumb": "assets/castlehall-thumb.jpg",
         "spots": [
           {
@@ -84,21 +84,13 @@ window.CONFIG = {
       },
       {
         "name": "교회",
-        "desc": "두 번째 배경 설명을 적어 주세요.",
+        "desc": "",
         "thumb": "",
-        "spots": [
-          {
-            "name": "홀",
-            "desc": "장소 설명",
-            "image": "",
-            "yaw": 0,
-            "links": []
-          }
-        ]
+        "spots": []
       },
       {
         "name": "보스룸",
-        "desc": "세 번째 배경 설명을 적어 주세요.",
+        "desc": "",
         "thumb": "assets/bossroom-thumb.jpg",
         "spots": [
           {
