@@ -24,6 +24,13 @@ window.CONFIG = {
     { "name": "주인공", "desc": "캐릭터 소개를 적어 주세요. 성격, 역할, 디자인 포인트 등.", "file": "" },
     { "name": "라이벌", "desc": "두 번째 캐릭터 소개.", "file": "" }
   ],
+  "world": {
+    "title": "배경",
+    "spots": [
+      { "name": "입구", "desc": "장소 설명을 적어 주세요. 영상의 어느 장면에 나오는 공간인지 등.", "image": "", "yaw": 0, "links": [ { "to": 1, "yaw": 0, "pitch": -5 } ] },
+      { "name": "대성당 홀", "desc": "두 번째 장소 설명.", "image": "", "yaw": 0, "links": [ { "to": 0, "yaw": 180, "pitch": -5 } ] }
+    ]
+  },
   "credits": [
     { "dept": "감독", "en": "Directors", "people": [
       { "name": "Lee Su-ah", "roles": [], "work": [] },

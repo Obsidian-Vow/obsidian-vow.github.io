@@ -98,6 +98,7 @@ button{font:inherit;cursor:pointer}
       <button type="button" data-tab="ticket">티켓</button>
       <button type="button" data-tab="credits">크레딧</button>
       <button type="button" data-tab="chars">캐릭터</button>
+      <button type="button" data-tab="world">배경</button>
     </div>
     <div class="ed-body" id="edBody"></div>
     <div class="ed-foot">
@@ -221,6 +222,43 @@ if (!window.CONFIG) document.body.innerHTML = '<p style="padding:40px">content.j
         </div>`).join("")}
       <div>${btn("+ 파트 추가","adddept")}</div>`,
 
+    world: () => `
+      <div class="ed-card">
+        <strong>360도 이미지 만드는 법</strong>
+        <p class="ed-help">가로:세로 2:1 비율의 360도(equirectangular) 렌더 이미지를 장소마다 한 장씩 준비합니다. 4096×2048 JPG를 추천합니다.<br>
+        · Maya Arnold: 카메라 Attribute → Arnold → Camera Type을 <b>spherical</b>로<br>
+        · Blender Cycles: 카메라 → Type <b>Panoramic</b> → <b>Equirectangular</b></p>
+      </div>
+      ${input("입장 화면 제목", "world.title", { ph:"배경" })}
+      ${draft.world.spots.map((sp, i) => `
+        <div class="ed-card">
+          <div class="ed-bar"><span class="grow">${esc(sp.name || "새 장소")}</span>${btn("↑","up",`world.spots.${i}`)}${btn("↓","down",`world.spots.${i}`)}${btn("삭제","del",`world.spots.${i}`,"danger")}</div>
+          ${input("장소 이름", `world.spots.${i}.name`)}
+          ${input("설명", `world.spots.${i}.desc`, { area:true })}
+          <div class="ed-media">
+            <div class="pv" style="aspect-ratio:2/1">${(preview["world.spots."+i+".image"] || sp.image) ? `<img src="${esc(preview["world.spots."+i+".image"] || sp.image)}" alt="">` : "임시 이미지"}</div>
+            <div class="ed-bar"><label class="upl mini">360도 이미지 선택<input type="file" accept="image/jpeg,image/png,image/webp" data-upload="world.spots.${i}.image"></label></div>
+          </div>
+          ${input("이미지 경로", `world.spots.${i}.image`, { ph:"assets/bg-hall.jpg" })}
+          ${input("처음 바라볼 방향 (도)", `world.spots.${i}.yaw`, { type:"number" })}
+          <div class="ed-card inner">
+            <strong style="font-size:14px">이동 버튼</strong>
+            <p class="ed-help">이 장소에서 다른 장소로 가는 버튼을 화면에 띄웁니다. 사이트 배경 화면 오른쪽 위에 지금 보는 방향(°)이 나오니, 버튼을 놓고 싶은 쪽을 바라본 뒤 그 숫자를 적으면 됩니다. 높이는 0이 눈높이, 음수면 아래쪽입니다.</p>
+            ${(sp.links || []).map((l, j) => `
+              <div class="ed-row" style="grid-template-columns:1.4fr 1fr 1fr auto">
+                <div class="field"><label for="${fid(`world.spots.${i}.links.${j}.to`)}">갈 곳</label>
+                  <select id="${fid(`world.spots.${i}.links.${j}.to`)}" data-path="world.spots.${i}.links.${j}.to" data-kind="num" style="background:#1a1316;border:1px solid #3a2f34;color:var(--paper);padding:10px;font:inherit">
+                    ${draft.world.spots.map((t, k) => k === i ? "" : `<option value="${k}" ${+l.to === k ? "selected" : ""}>${esc(t.name || "장소 " + (k+1))}</option>`).join("")}
+                  </select></div>
+                ${input("방향 (도)", `world.spots.${i}.links.${j}.yaw`, { type:"number" })}
+                ${input("높이 (도)", `world.spots.${i}.links.${j}.pitch`, { type:"number" })}
+                ${btn("삭제","del",`world.spots.${i}.links.${j}`,"danger")}
+              </div>`).join("")}
+            <div>${draft.world.spots.length > 1 ? btn("+ 이동 버튼 추가","addlink",i) : `<span class="ed-help">장소가 두 곳 이상이면 추가할 수 있습니다.</span>`}</div>
+          </div>
+        </div>`).join("")}
+      <div>${btn("+ 장소 추가","addspot")}</div>`,
+
     chars: () => `
       <p class="ed-help">3D 모델은 텍스처가 들어간 .glb 파일로 올려 주세요. 모델이 없으면 임시 캐릭터가 나옵니다.</p>
       ${draft.characters.map((c, i) => `
@@ -250,7 +288,7 @@ if (!window.CONFIG) document.body.innerHTML = '<p style="padding:40px">content.j
     let v = el.value;
     if (el.dataset.kind === "csv") v = v.split(",").map(x => x.trim()).filter(Boolean);
     else if (el.dataset.kind === "lines") v = v.split("\n").map(x => x.trim()).filter(Boolean);
-    else if (el.type === "number") v = +v;
+    else if (el.type === "number" || el.dataset.kind === "num") v = +v;
     setAt(draft, p, v);
   });
 
@@ -264,6 +302,12 @@ if (!window.CONFIG) document.body.innerHTML = '<p style="padding:40px">content.j
     if (a === "adddept") draft.credits.push({ dept:"", en:"", people:[{ name:"", roles:[], work:[] }] });
     if (a === "addperson") draft.credits[+arg].people.push({ name:"", roles:[], work:[] });
     if (a === "addchar") draft.characters.push({ name:"", desc:"", file:"" });
+    if (a === "addspot") draft.world.spots.push({ name:"", desc:"", image:"", yaw:0, links:[] });
+    if (a === "addlink"){ const sp = draft.world.spots[+arg]; const to = draft.world.spots.findIndex((_, k) => k !== +arg); (sp.links = sp.links || []).push({ to, yaw:0, pitch:-5 }); }
+    if (a === "del" && arg.startsWith("world.spots.") && arg.split(".").length === 3){
+      const gone = +arg.split(".")[2];
+      draft.world.spots.forEach(sp => { sp.links = (sp.links || []).filter(l => +l.to !== gone).map(l => ({ ...l, to: +l.to > gone ? +l.to - 1 : +l.to })); });
+    }
     if (a === "clear"){ setAt(draft, arg, ""); if (arg.endsWith(".file")) setAt(draft, arg.replace(/file$/, "fileName"), ""); }
     render();
   });
@@ -275,7 +319,7 @@ if (!window.CONFIG) document.body.innerHTML = '<p style="padding:40px">content.j
     const f = el.files[0], path = "assets/" + f.name.replace(/\s+/g, "-");
     setAt(draft, key, path);
     if (key === "logo") preview.logo = URL.createObjectURL(f);
-    if (key.startsWith("ticket.")) preview[key] = URL.createObjectURL(f);
+    if (key.startsWith("ticket.") || key.startsWith("world.")) preview[key] = URL.createObjectURL(f);
     needed.set(path, f);
     say(`‘${f.name}’을(를) 골랐습니다. ‘사이트에 게시’를 누르면 함께 올라갑니다.`);
     render(); renderOut();
@@ -356,6 +400,7 @@ if (!window.CONFIG) document.body.innerHTML = '<p style="padding:40px">content.j
     if (draft.ticket.image && !draft.ticket.front) draft.ticket.front = draft.ticket.image; delete draft.ticket.image;
     ["prefix","rows","perRow","note"].forEach(k => delete draft.ticket[k]);
     ["info","credits","characters"].forEach(k => draft[k] = draft[k] || []);
+    draft.world = Object.assign({ title:"배경", spots:[] }, draft.world);
     [["sound","사운드","Sound"],["thanks","감사한 분들","Special Thanks"]].forEach(([k, dept, en]) => {
       if (draft[k] && draft[k].length) draft.credits.push({ dept, en, people: draft[k].map(([r, n]) => ({ name:n, roles:[r], work:[] })) });
       delete draft[k];
