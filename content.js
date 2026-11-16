@@ -39,7 +39,7 @@ window.CONFIG = {
     {
       "name": "기사",
       "desc": "",
-      "file": ""
+      "file": "assets/knight_web.glb"
     },
     {
       "name": "보스 몬스터",
