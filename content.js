@@ -79,7 +79,7 @@ window.CONFIG = {
         "start": [
           0.5,
           0.17,
-          0.15
+          0.45
         ]
       },
       {
@@ -89,11 +89,11 @@ window.CONFIG = {
         "spots": [],
         "model": "assets/church.glb",
         "yaw": 90,
-        "pitch": -4,
+        "pitch": -6,
         "start": [
           0.5,
           0.2,
-          0.8
+          0.5
         ]
       },
       {
