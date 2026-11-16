@@ -213,9 +213,8 @@ main{height:100%}
   .view{padding-left:16px;padding-right:16px}
   .hint{font-size:12px}
 }
-@media (prefers-reduced-motion:reduce){
-  *,*::before,*::after{animation-duration:.01ms!important;animation-delay:0s!important;transition-duration:.01ms!important}
-}
+/* 이 사이트는 연출이 핵심이라 '동작 줄이기' 설정과 관계없이 모션을 재생합니다. 깜빡임 효과만 끕니다. */
+@media (prefers-reduced-motion:reduce){ .beam{animation:none} }
 </style>
 <script type="importmap">
 {"imports":{
@@ -538,7 +537,7 @@ const C = window.CONFIG;
 const vp = document.getElementById("viewport");
 let renderer, scene, camera, controls, current, rim, started = false, wire = false;
 const HOME = { dist: 4.2, height: 1.4, target: new THREE.Vector3(0, 1, 0) };
-const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const reduce = false;
 
 window.initViewer = function(){
   if (started){ resize(); return; }
