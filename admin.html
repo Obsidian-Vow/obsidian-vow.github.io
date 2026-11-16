@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="robots" content="noindex">
-<title>상영관 사이트 편집</title>
+<title>상영관 사이트 관리자</title>
 <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@700;900&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
 :root{
@@ -91,7 +91,7 @@ button{font:inherit;cursor:pointer}
 <div class="layout">
 <div class="editor on" id="editor">
   <div class="ed-panel">
-    <div class="ed-head"><h2>사이트 내용 편집</h2><a class="mini" href="index.html" style="text-decoration:none">사이트 보기 →</a></div>
+    <div class="ed-head"><h2>사이트 관리자</h2><a class="mini" href="index.html" style="text-decoration:none">사이트 보기 →</a></div>
     <div class="ed-tabs" role="tablist" id="edTabs">
       <button type="button" data-tab="basic">작품 정보</button>
       <button type="button" data-tab="media">로고 · 영상</button>
@@ -102,26 +102,36 @@ button{font:inherit;cursor:pointer}
     <div class="ed-body" id="edBody"></div>
     <div class="ed-foot">
       <span class="ed-status" id="edStatus"></span>
-      <button class="btn ghost" id="edCopy" type="button">내용 복사</button>
-      <button class="btn" id="edSave" type="button">content.js 내려받기</button>
+      <button class="mini" id="edCopy" type="button">내용 복사</button>
+      <button class="mini" id="edSave" type="button">content.js 내려받기</button>
       <button id="edClose" hidden></button><button id="edCancel" hidden></button><button id="editBtn" hidden></button>
     </div>
   </div>
 </div>
 <aside class="guide">
-  <div><span class="eyebrow">반영하는 방법</span><h2 style="font-size:22px;margin-top:6px">편집 → 내려받기 → 올리기</h2></div>
-  <ol>
-    <li>왼쪽에서 내용을 고칩니다. 지금 사이트에 올라가 있는 내용이 불러와져 있습니다.</li>
-    <li><b>content.js 내려받기</b>를 누릅니다.</li>
-    <li>GitHub 저장소 페이지에서 <b>Add file → Upload files</b>로 내려받은 <code>content.js</code>를 올리고 <b>Commit changes</b>를 누릅니다. 같은 이름 파일은 덮어써집니다.</li>
-    <li>새로 고른 파일이 있으면 <code>assets</code> 폴더를 연 다음 같은 방법으로 올립니다.</li>
-    <li>1~2분 뒤 사이트를 새로고침하면 반영됩니다.</li>
-  </ol>
-  <div><div class="eyebrow" style="margin-bottom:8px">assets 폴더에 올릴 파일</div><ul id="need"></ul></div>
-  <p class="ed-help">이 편집 페이지는 내용 파일을 만들어 줄 뿐, 사이트를 직접 바꾸지는 않습니다. 그래서 주소를 아는 사람이 열어 봐도 사이트에는 아무 영향이 없습니다.</p>
+  <div><span class="eyebrow">관리자 게시</span><h2 style="font-size:22px;margin-top:6px">사이트에 바로 게시</h2></div>
+  <div class="field">
+    <label for="ghToken">GitHub 토큰 (이 브라우저에만 저장)</label>
+    <input id="ghToken" type="password" autocomplete="off" placeholder="github_pat_…">
+  </div>
+  <div class="ed-bar"><button class="mini" id="saveToken" type="button">토큰 저장</button><button class="mini danger" id="clearToken" type="button">토큰 지우기</button></div>
+  <button class="btn" id="publish" type="button">사이트에 게시</button>
+  <p class="ed-help">저장소: <code id="repoName"></code> · 반영까지 1~2분</p>
+  <div><div class="eyebrow" style="margin-bottom:8px">함께 올라갈 파일</div><ul id="need"></ul></div>
+  <details>
+    <summary class="ed-help" style="cursor:pointer">토큰 만드는 법 (처음 한 번)</summary>
+    <ol>
+      <li>GitHub → 오른쪽 위 프로필 → <b>Settings</b> → 맨 아래 <b>Developer settings</b></li>
+      <li><b>Personal access tokens → Fine-grained tokens → Generate new token</b></li>
+      <li>Repository access: <b>Only select repositories</b> → 사이트 저장소 선택</li>
+      <li>Permissions → Repository permissions → <b>Contents: Read and write</b></li>
+      <li>생성된 토큰을 복사해 위 칸에 붙여 넣고 <b>토큰 저장</b></li>
+    </ol>
+  </details>
+  <p class="ed-help">토큰이 없는 사람은 이 페이지를 열어도 사이트를 바꿀 수 없습니다. 공용 컴퓨터에서는 게시 후 ‘토큰 지우기’를 눌러 주세요.</p>
 </aside>
 </div>
-<script src="content.js"></script>
+<script>document.write('<script src="content.js?v=' + Date.now() + '"><\/script>');</script>
 <script>
 if (!window.CONFIG) document.body.innerHTML = '<p style="padding:40px">content.js를 찾지 못했습니다. admin.html과 같은 폴더에 content.js가 있어야 합니다.</p>';
 </script>
@@ -162,9 +172,9 @@ if (!window.CONFIG) document.body.innerHTML = '<p style="padding:40px">content.j
     media: () => `
       <div class="ed-card">
         <strong>로고</strong>
-        <p class="ed-help">배경이 투명한 PNG를 추천합니다. 파일을 고르면 경로가 자동으로 적힙니다. 고른 파일은 사이트의 assets 폴더에 같은 이름으로 올려 주세요.</p>
+        <p class="ed-help">어두운 배경에 올라가므로 배경이 투명하고 밝은 색 로고(PNG)를 써 주세요.</p>
         <div class="ed-media">
-          <div class="pv">${preview.logo ? `<img src="${esc(preview.logo)}" alt="로고 미리보기">` : esc(draft.logo || "없음")}</div>
+          <div class="pv" style="background:#100c0e">${(preview.logo || draft.logo) ? `<img src="${esc(preview.logo || draft.logo)}" alt="로고 미리보기">` : "없음"}</div>
           <div class="ed-bar">
             <label class="upl mini">이미지 선택<input type="file" accept="image/*" data-upload="logo"></label>
           </div>
@@ -173,25 +183,25 @@ if (!window.CONFIG) document.body.innerHTML = '<p style="padding:40px">content.j
       </div>
       <div class="ed-card">
         <strong>상영 영상</strong>
-        <p class="ed-help">유튜브 주소를 넣거나(용량 제한 없음, 추천), mp4 파일을 골라 assets 폴더에 올립니다. 유튜브는 ‘일부 공개’로 올려도 재생됩니다.</p>
+        <p class="ed-help">mp4 파일은 50MB 이하로 줄여서 올려 주세요(GitHub 한도). 유튜브 주소를 넣어도 됩니다.</p>
         ${input("유튜브 주소 또는 영상 파일 경로", "video", { ph:"https://youtu.be/xxxxxxxxxxx" })}
         <div class="ed-bar"><label class="upl mini">mp4 파일 선택<input type="file" accept="video/mp4,video/webm" data-upload="video"></label></div>
       </div>`,
 
     ticket: () => `
+      <p class="ed-help">세로 티켓 이미지 앞면과 뒷면을 고르면 매표소에서 앞면이 뽑혀 나온 뒤 뒤집혀 뒷면을 보여 줍니다. 위아래 가장자리는 사이트에서 자동으로 울퉁불퉁하게 잘립니다. 비율은 약 1 : 1.88이 가장 잘 맞습니다.</p>
+      ${["front","back"].map(k => `
       <div class="ed-card">
-        <strong>티켓 이미지</strong>
-        <p class="ed-help">직접 디자인한 티켓 이미지(PNG/JPG)를 고르면 이 이미지가 매표소에서 뽑혀 나옵니다. 가로로 긴 티켓이 가장 자연스럽습니다. 비워 두면 기본 티켓이 나옵니다.</p>
+        <strong>티켓 ${k === "front" ? "앞면" : "뒷면"}</strong>
         <div class="ed-media">
-          <div class="pv">${preview.ticket ? `<img src="${esc(preview.ticket)}" alt="티켓 미리보기">` : esc(draft.ticket.image || "기본 티켓")}</div>
-          <div class="ed-bar"><label class="upl mini">이미지 선택<input type="file" accept="image/*" data-upload="ticket.image"></label></div>
+          <div class="pv" style="aspect-ratio:9/16;max-height:200px">${(preview["ticket."+k] || draft.ticket[k]) ? `<img src="${esc(preview["ticket."+k] || draft.ticket[k])}" alt="">` : "기본 티켓"}</div>
+          <div class="ed-bar"><label class="upl mini">이미지 선택<input type="file" accept="image/*" data-upload="ticket.${k}"></label></div>
         </div>
-        ${input("티켓 이미지 경로", "ticket.image", { ph:"assets/ticket.png" })}
-      </div>
+        ${input("이미지 경로", "ticket."+k, { ph:"assets/ticket-"+k+".jpg" })}
+      </div>`).join("")}
       <div class="ed-card">
         <strong>상영관 정보</strong>
-        <p class="ed-help">발권 완료 문구와 기본 티켓에 쓰입니다.</p>
-        <div class="ed-row2">${input("상영관 이름", "ticket.hall", { ph:"제1상영관" })}${input("러닝타임", "ticket.runtime", { ph:"05:00" })}</div>
+        <div class="ed-row2">${input("상영관 이름", "ticket.hall", { ph:"제1상영관" })}${input("러닝타임", "ticket.runtime", { ph:"01:53" })}</div>
       </div>`,
 
     credits: () => `
@@ -265,9 +275,9 @@ if (!window.CONFIG) document.body.innerHTML = '<p style="padding:40px">content.j
     const f = el.files[0], path = "assets/" + f.name.replace(/\s+/g, "-");
     setAt(draft, key, path);
     if (key === "logo") preview.logo = URL.createObjectURL(f);
-    if (key === "ticket.image") preview.ticket = URL.createObjectURL(f);
-    needed.set(path, { name: f.name, size: f.size });
-    say(`‘${f.name}’ → assets 폴더에 ${path.slice(7)} 이름으로 올려 주세요.`);
+    if (key.startsWith("ticket.")) preview[key] = URL.createObjectURL(f);
+    needed.set(path, f);
+    say(`‘${f.name}’을(를) 골랐습니다. ‘사이트에 게시’를 누르면 함께 올라갑니다.`);
     render(); renderOut();
   });
 
@@ -278,30 +288,79 @@ if (!window.CONFIG) document.body.innerHTML = '<p style="padding:40px">content.j
   function renderOut(){
     const box = $("#need");
     box.innerHTML = needed.size
-      ? [...needed].map(([p, f]) => `<li><code>${esc(p)}</code> <small>${(f.size/MB).toFixed(1)}MB${f.size > 25*MB ? " · GitHub 웹 업로드 한도(25MB) 초과" : ""}</small></li>`).join("")
-      : "<li><small>이번에 새로 고른 파일이 없습니다.</small></li>";
+      ? [...needed].map(([p, f]) => `<li><code>${esc(p)}</code> <small>${(f.size/MB).toFixed(1)}MB${f.size > 50*MB ? " · 너무 큽니다(50MB 이하)" : ""}</small></li>`).join("")
+      : "<li><small>새로 고른 파일 없음</small></li>";
   }
   $("#edSave").onclick = () => {
     const blob = new Blob([output()], { type: "text/javascript" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob); a.download = "content.js"; a.click();
-    say("content.js를 내려받았습니다. 아래 순서대로 사이트에 올려 주세요.");
+    say("content.js를 내려받았습니다.");
   };
   $("#edCopy").onclick = async () => {
     try { await navigator.clipboard.writeText(output()); say("content.js 내용을 복사했습니다."); }
     catch(e){ say("복사하지 못했습니다. 내려받기를 이용해 주세요.", true); }
   };
 
+  /* ---- GitHub에 바로 게시 ---- */
+  const REPO = (() => {
+    const m = location.hostname.match(/^([\w-]+)\.github\.io$/);
+    const seg = location.pathname.split("/").filter(Boolean);
+    if (m && seg.length && !seg[0].endsWith(".html")) return m[1] + "/" + seg[0];
+    if (m) return m[1] + "/" + m[1] + ".github.io";
+    return "caplee565-hash/screening";
+  })();
+  const tokenEl = $("#ghToken");
+  try { tokenEl.value = localStorage.getItem("gh_token") || ""; } catch(e){}
+  $("#repoName").textContent = REPO;
+  $("#saveToken").onclick = () => { try { localStorage.setItem("gh_token", tokenEl.value.trim()); say("토큰을 이 브라우저에 저장했습니다."); } catch(e){ say("저장하지 못했습니다.", true); } };
+  $("#clearToken").onclick = () => { tokenEl.value = ""; try { localStorage.removeItem("gh_token"); } catch(e){} say("토큰을 지웠습니다."); };
+  const b64File = f => new Promise((ok, no) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(",")[1]); r.onerror = no; r.readAsDataURL(f); });
+  const b64Text = t => { const bytes = new TextEncoder().encode(t); let bin = ""; for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000)); return btoa(bin); };
+  async function ghPut(path, content, token){
+    const url = `https://api.github.com/repos/${REPO}/contents/${path.split("/").map(encodeURIComponent).join("/")}`;
+    const headers = { Authorization: "Bearer " + token, Accept: "application/vnd.github+json" };
+    let sha;
+    const g = await fetch(url + "?ref=main", { headers, cache: "no-store" });
+    if (g.ok) sha = (await g.json()).sha;
+    else if (g.status === 401) throw new Error("토큰이 올바르지 않거나 만료되었습니다.");
+    const r = await fetch(url, { method: "PUT", headers, body: JSON.stringify({ message: "사이트 내용 수정: " + path, content, branch: "main", sha }) });
+    if (!r.ok){
+      if (r.status === 401 || r.status === 403) throw new Error("토큰에 이 저장소의 Contents 쓰기 권한이 없습니다.");
+      if (r.status === 404) throw new Error("저장소를 찾지 못했습니다: " + REPO);
+      if (r.status === 413 || r.status === 422) throw new Error(path + " 파일이 너무 큽니다.");
+      throw new Error(path + " 올리기 실패 (" + r.status + ")");
+    }
+  }
+  $("#publish").onclick = async () => {
+    const token = tokenEl.value.trim();
+    if (!token){ say("먼저 GitHub 토큰을 넣어 주세요.", true); tokenEl.focus(); return; }
+    const btn = $("#publish"); btn.disabled = true;
+    try {
+      for (const [p, f] of needed){
+        if (f.size > 50 * MB) throw new Error(`${f.name}이(가) 50MB를 넘습니다. 줄여서 다시 골라 주세요.`);
+        say(`${f.name} 올리는 중… (${(f.size/MB).toFixed(1)}MB)`);
+        await ghPut(p, await b64File(f), token);
+      }
+      say("내용 저장 중…");
+      await ghPut("content.js", b64Text(output()), token);
+      needed.clear(); renderOut();
+      say("게시했습니다. 1~2분 뒤 사이트에 반영됩니다.");
+    } catch(err){ say(err.message || "게시하지 못했습니다.", true); }
+    btn.disabled = false;
+  };
+
   function open(){
     draft = JSON.parse(JSON.stringify(window.CONFIG));
-    draft.ticket = Object.assign({ image:"", hall:"제1상영관", runtime:"05:00" }, draft.ticket);
+    draft.ticket = Object.assign({ front:"", back:"", hall:"제1상영관", runtime:"" }, draft.ticket);
+    if (draft.ticket.image && !draft.ticket.front) draft.ticket.front = draft.ticket.image; delete draft.ticket.image;
     ["prefix","rows","perRow","note"].forEach(k => delete draft.ticket[k]);
     ["info","credits","characters"].forEach(k => draft[k] = draft[k] || []);
     [["sound","사운드","Sound"],["thanks","감사한 분들","Special Thanks"]].forEach(([k, dept, en]) => {
       if (draft[k] && draft[k].length) draft.credits.push({ dept, en, people: draft[k].map(([r, n]) => ({ name:n, roles:[r], work:[] })) });
       delete draft[k];
     });
-    say("내용을 고친 뒤 content.js를 내려받으세요.");
+    say("내용을 고친 뒤 오른쪽 ‘사이트에 게시’를 누르세요.");
     render(); ED.classList.add("on");
   }
   const close = () => {};

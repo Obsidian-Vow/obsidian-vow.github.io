@@ -3,21 +3,21 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>졸업작품 상영관</title>
+<title>Obsidian Vow 상영관</title>
 <meta name="description" content="졸업작품 3D 애니메이션 상영 사이트">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@500;700;900&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:opsz,wght@6..96,500;6..96,700&family=Noto+Serif+KR:wght@500;700;900&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
 <style>
 :root{
   /* 흐름: 오프닝 → 매표소(자동 발권) → 상영관(커튼) → 크레딧 → 캐릭터 전시실 */
   --ink:#100c0e;
   --velvet:#6a1625;
-  --brass:#d1a85e;
+  --brass:#e3c48e;
   --paper:#f1e8d6;
   --smoke:#9a9096;
   --line:#2c2428;
-  --display:"Noto Serif KR","Nanum Myeongjo",Georgia,serif;
+  --display:"Bodoni Moda","Noto Serif KR","Nanum Myeongjo",Georgia,serif;
   --body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
   --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
   color-scheme:dark;
@@ -76,30 +76,43 @@ main{height:100%}
 .stage .cta{opacity:0;animation:rise 1s ease 3.8s forwards;display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
 
 /* ---------- 매표소 (자동 발권) ---------- */
-#ticket{background:radial-gradient(ellipse 50% 45% at 50% 30%,#241619 0%,var(--ink) 75%)}
-#ticket.active{display:grid;place-items:center;align-content:center;gap:28px}
-.machine{display:grid;justify-items:center;width:min(600px,92vw)}
-.machine .plate{width:100%;padding:14px 18px 22px;background:linear-gradient(#2a2024,#1a1316);border:1px solid #3a2f34;border-radius:6px 6px 0 0;text-align:center}
+#ticket{background:radial-gradient(ellipse 50% 45% at 50% 25%,#2a1a12 0%,var(--ink) 75%);padding-top:28px;padding-bottom:20px}
+#ticket.active{display:grid;justify-items:center;align-content:start;gap:14px}
+:root{--tw:min(78vw,calc((100dvh - 170px) * .533),440px)}
+.machine{display:grid;justify-items:center;width:calc(var(--tw) + 70px)}
+.machine .plate{width:100%;padding:12px 18px 20px;background:linear-gradient(#2c211c,#1a1316);border:1px solid #3e3128;border-radius:6px 6px 0 0;text-align:center}
 .machine .plate span{font-family:var(--mono);font-size:11px;letter-spacing:.24em;color:var(--brass)}
-.slot{width:92%;height:16px;margin-top:-8px;background:#050304;border:1px solid #3a2f34;border-radius:8px;box-shadow:inset 0 4px 8px #000;position:relative;z-index:2}
-.clip{width:88%;overflow:hidden;margin-top:-8px;padding:0 12px 40px}
-.tk{position:relative;transform:translateY(-102%);filter:drop-shadow(0 18px 30px rgba(0,0,0,.55))}
-.tk img{display:block;width:100%;height:auto}
-#ticket.printing .tk{animation:printOut 2.6s cubic-bezier(.35,.05,.2,1) .5s forwards}
-@keyframes printOut{0%{transform:translateY(-102%)}20%{transform:translateY(-80%)}35%{transform:translateY(-78%)}100%{transform:translateY(0)}}
+.slot{width:calc(var(--tw) + 30px);height:14px;margin-top:-7px;background:#050304;border:1px solid #3a2f34;border-radius:7px;box-shadow:inset 0 4px 8px #000;position:relative;z-index:2}
+.clip{width:calc(var(--tw) + 60px);overflow:hidden;margin-top:-7px;padding:0 30px 30px}
+.tk{position:relative;width:var(--tw);aspect-ratio:900/1688;transform:translateY(-102%);perspective:1600px;filter:drop-shadow(0 16px 26px rgba(0,0,0,.6))}
+.flip{position:absolute;inset:0;transform-style:preserve-3d;transition:transform 1.3s cubic-bezier(.45,.05,.25,1)}
+.face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;overflow:hidden;
+  --r:calc(var(--tw) * .022);--s:calc(var(--tw) * .066);
+  -webkit-mask:radial-gradient(circle var(--r) at 50% 0,#0000 96%,#000) 50% 0/var(--s) 51% repeat-x,radial-gradient(circle var(--r) at 50% 100%,#0000 96%,#000) 50% 100%/var(--s) 51% repeat-x;
+  mask:radial-gradient(circle var(--r) at 50% 0,#0000 96%,#000) 50% 0/var(--s) 51% repeat-x,radial-gradient(circle var(--r) at 50% 100%,#0000 96%,#000) 50% 100%/var(--s) 51% repeat-x}
+.face img,.face>div{display:block;width:100%;height:100%;object-fit:cover}
+.face.back{transform:rotateY(180deg)}
+.face::after{content:"";position:absolute;inset:0;background:linear-gradient(105deg,transparent 35%,rgba(255,240,210,.22) 48%,transparent 60%);transform:translateX(-120%);pointer-events:none}
+#ticket.printing .tk{animation:printOut 3s cubic-bezier(.35,.05,.2,1) .4s forwards}
+@keyframes printOut{0%{transform:translateY(-102%)}18%{transform:translateY(-84%)}30%{transform:translateY(-82%)}100%{transform:translateY(0)}}
+#ticket.shine .face.front::after{animation:shine 1.2s ease forwards}
+#ticket.back .flip{transform:rotateY(180deg) scale(1.03)}
+#ticket.back .face.back::after{animation:shine 1.2s ease .9s forwards}
+#ticket.round .flip{transform:rotateY(360deg)}
+@keyframes shine{to{transform:translateX(120%)}}
 #ticket.taken .tk{animation:takeAway 1.1s cubic-bezier(.5,0,.7,.4) forwards}
-@keyframes takeAway{0%{transform:translateY(0)}25%{transform:translateY(-6px) rotate(-1deg)}100%{transform:translateY(60vh) rotate(-8deg) scale(.9);opacity:0}}
-.tk-status{font-family:var(--mono);font-size:13px;letter-spacing:.12em;color:var(--smoke);min-height:1.6em;text-align:center}
+@keyframes takeAway{0%{transform:translateY(0)}25%{transform:translateY(-8px) rotate(-1deg)}100%{transform:translateY(70vh) rotate(-8deg) scale(.9);opacity:0}}
+.tk-status{font-family:var(--mono);font-size:13px;letter-spacing:.12em;color:var(--smoke);min-height:1.6em;text-align:center;margin:0}
 .tk-status b{color:var(--brass);font-weight:400}
+.tk-skip{position:fixed;right:18px;bottom:16px;font-size:13px;color:#6d6368;text-decoration:none}
+.tk-skip:hover{color:var(--paper)}
 
 /* 기본 티켓 (티켓 이미지가 없을 때) */
-.tk-default{display:grid;grid-template-columns:1fr 120px;background:var(--paper);color:#241a1d;position:relative}
-.tk-default::before,.tk-default::after{content:"";position:absolute;left:calc(100% - 130px);width:20px;height:20px;border-radius:50%;background:var(--ink)}
-.tk-default::before{top:-10px}.tk-default::after{bottom:-10px}
-.tk-main{padding:22px 24px;border-right:2px dashed #b9ab92;display:grid;gap:12px}
+.tk-default{display:grid;grid-template-rows:1fr auto;background:var(--paper);color:#241a1d;position:relative}
+.tk-main{padding:28px 24px;border-bottom:2px dashed #b9ab92;align-content:start;display:grid;gap:12px}
 .tk-main .ev{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--velvet)}
 .tk-main h3{font-size:26px}
-.tk-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px 16px}
+.tk-grid{display:grid;grid-template-columns:1fr;gap:8px 16px}
 .tk-grid div{display:grid}
 .tk-grid small{font-size:10px;letter-spacing:.12em;color:#7a6b62;font-family:var(--mono)}
 .tk-grid b{font-family:var(--mono);font-size:15px;font-weight:600;font-variant-numeric:tabular-nums}
@@ -224,9 +237,10 @@ main{height:100%}
     <div class="machine">
       <div class="plate"><span>TICKET · 매표소</span></div>
       <div class="slot" aria-hidden="true"></div>
-      <div class="clip"><div class="tk" id="tk"></div></div>
+      <div class="clip"><div class="tk" id="tk"><div class="flip" id="flip"></div></div></div>
     </div>
     <p class="tk-status" id="tkStatus" aria-live="polite"></p>
+    <a class="tk-skip" href="#screening">건너뛰기 →</a>
   </section>
 
   <!-- 상영관 -->
@@ -309,7 +323,7 @@ main{height:100%}
 </div>
 <div class="fader" id="fader"></div>
 
-<script src="content.js"></script>
+<script>document.write('<script src="content.js?v=' + Date.now() + '"><\/script>');</script>
 <script>
 const C = window.CONFIG;
 const $ = s => document.querySelector(s);
@@ -368,26 +382,38 @@ function defaultTicket(){
   drawBarcode(el.querySelector("canvas"), no);
   return el;
 }
-const tk = $("#tk");
+const flip = $("#flip");
 (function buildTicket(){
-  const src = C.ticket && C.ticket.image;
-  if (!src){ tk.append(defaultTicket()); return; }
-  const img = new Image(); img.alt = "관람 티켓"; img.src = src;
-  img.onerror = () => { img.remove(); tk.append(defaultTicket()); };
-  tk.append(img);
+  const T = C.ticket || {};
+  const front = T.front || T.image, back = T.back;
+  const face = (cls, src) => {
+    const f = document.createElement("div"); f.className = "face " + cls;
+    if (src){ const img = new Image(); img.alt = cls === "front" ? "티켓 앞면" : "티켓 뒷면"; img.src = src; img.onerror = () => { img.remove(); f.append(defaultTicket()); }; f.append(img); }
+    else f.append(defaultTicket());
+    flip.append(f);
+  };
+  face("front", front); face("back", back);
 })();
 async function runTicket(id){
   const v = $("#ticket"), st = $("#tkStatus");
-  v.classList.remove("printing", "taken"); void v.offsetWidth;
+  const ok = () => id === runId;
+  v.classList.remove("printing", "shine", "back", "round", "taken");
+  flip.style.transition = "none"; void v.offsetWidth; flip.style.transition = "";
   st.textContent = "티켓을 발권하고 있습니다";
   v.classList.add("printing");
-  await wait(3300); if (id !== runId) return;
-  st.innerHTML = "발권 완료 · <b>" + esc((C.ticket && C.ticket.hall) || "상영관") + "</b>으로 입장합니다";
-  await wait(1800); if (id !== runId) return;
+  await wait(3500); if (!ok()) return;
+  v.classList.add("shine");
+  st.innerHTML = "발권 완료";
+  await wait(1100); if (!ok()) return;
+  v.classList.add("back");
+  await wait(3000); if (!ok()) return;
+  v.classList.add("round");
+  st.innerHTML = "<b>" + esc((C.ticket && C.ticket.hall) || "상영관") + "</b>으로 입장합니다";
+  await wait(2000); if (!ok()) return;
   v.classList.add("taken");
-  await wait(600); if (id !== runId) return;
+  await wait(700); if (!ok()) return;
   await fade(true);
-  if (id === runId) location.hash = "screening";
+  if (ok()) location.hash = "screening";
 }
 
 /* ---------- 상영관 ---------- */
