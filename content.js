@@ -43,8 +43,8 @@ window.CONFIG = {
     },
     {
       "name": "보스 몬스터",
-      "desc": "두 번째 캐릭터 소개.",
-      "file": ""
+      "desc": "",
+      "file": "assets/demon.glb"
     },
     {
       "name": "유영 몬스터",
@@ -54,7 +54,7 @@ window.CONFIG = {
     {
       "name": "스켈레톤",
       "desc": "",
-      "file": ""
+      "file": "assets/스켈레톤.glb"
     }
   ],
   "world": {
