@@ -229,35 +229,48 @@ if (!window.CONFIG) document.body.innerHTML = '<p style="padding:40px">content.j
         · Maya Arnold: 카메라 Attribute → Arnold → Camera Type을 <b>spherical</b>로<br>
         · Blender Cycles: 카메라 → Type <b>Panoramic</b> → <b>Equirectangular</b></p>
       </div>
-      ${input("입장 화면 제목", "world.title", { ph:"배경" })}
-      ${draft.world.spots.map((sp, i) => `
-        <div class="ed-card">
-          <div class="ed-bar"><span class="grow">${esc(sp.name || "새 장소")}</span>${btn("↑","up",`world.spots.${i}`)}${btn("↓","down",`world.spots.${i}`)}${btn("삭제","del",`world.spots.${i}`,"danger")}</div>
-          ${input("장소 이름", `world.spots.${i}.name`)}
-          ${input("설명", `world.spots.${i}.desc`, { area:true })}
+      ${input("배경 화면 제목", "world.title", { ph:"배경" })}
+      <p class="ed-help">배경(공간)마다 카드가 하나씩 생기고, 방문자가 골라서 들어갑니다. 한 배경 안에 시점(360도 이미지)을 여러 개 둘 수 있습니다.</p>
+      ${draft.world.places.map((pl, p) => `
+      <div class="ed-card" style="border-color:#4a3e44">
+        <div class="ed-bar"><span class="grow" style="font-size:18px">${esc(pl.name || "새 배경")}</span>${btn("↑","up",`world.places.${p}`)}${btn("↓","down",`world.places.${p}`)}${btn("배경 삭제","del",`world.places.${p}`,"danger")}</div>
+        ${input("배경 이름 (카드 제목)", `world.places.${p}.name`)}
+        ${input("배경 설명 (카드에 표시)", `world.places.${p}.desc`, { area:true, rows:2 })}
+        <div class="ed-media">
+          <div class="pv" style="aspect-ratio:4/5;max-height:160px">${(preview["world.places."+p+".thumb"] || pl.thumb) ? `<img src="${esc(preview["world.places."+p+".thumb"] || pl.thumb)}" alt="">` : "첫 시점 이미지 사용"}</div>
+          <div class="ed-bar"><label class="upl mini">카드 이미지 선택 (선택)<input type="file" accept="image/*" data-upload="world.places.${p}.thumb"></label></div>
+        </div>
+        ${pl.spots.map((sp, i) => { const P = `world.places.${p}.spots.${i}`; return `
+        <div class="ed-card inner">
+          <div class="ed-bar"><span class="grow">${esc(sp.name || "새 시점")}</span>${btn("↑","up",P)}${btn("↓","down",P)}${btn("삭제","del",P,"danger")}</div>
+          ${input("시점 이름", P+".name")}
+          ${input("설명", P+".desc", { area:true, rows:2 })}
           <div class="ed-media">
-            <div class="pv" style="aspect-ratio:2/1">${(preview["world.spots."+i+".image"] || sp.image) ? `<img src="${esc(preview["world.spots."+i+".image"] || sp.image)}" alt="">` : "임시 이미지"}</div>
-            <div class="ed-bar"><label class="upl mini">360도 이미지 선택<input type="file" accept="image/jpeg,image/png,image/webp" data-upload="world.spots.${i}.image"></label></div>
+            <div class="pv" style="aspect-ratio:2/1">${(preview[P+".image"] || sp.image) ? `<img src="${esc(preview[P+".image"] || sp.image)}" alt="">` : "임시 이미지"}</div>
+            <div class="ed-bar"><label class="upl mini">360도 이미지 선택<input type="file" accept="image/jpeg,image/png,image/webp" data-upload="${P}.image"></label></div>
           </div>
-          ${input("이미지 경로", `world.spots.${i}.image`, { ph:"assets/bg-hall.jpg" })}
-          ${input("처음 바라볼 방향 (도)", `world.spots.${i}.yaw`, { type:"number" })}
-          <div class="ed-card inner">
+          ${input("이미지 경로", P+".image", { ph:"assets/bg1-hall.jpg" })}
+          ${input("처음 바라볼 방향 (도)", P+".yaw", { type:"number" })}
+          ${pl.spots.length > 1 ? `
+          <div class="ed-card" style="background:#0d090b">
             <strong style="font-size:14px">이동 버튼</strong>
-            <p class="ed-help">이 장소에서 다른 장소로 가는 버튼을 화면에 띄웁니다. 사이트 배경 화면 오른쪽 위에 지금 보는 방향(°)이 나오니, 버튼을 놓고 싶은 쪽을 바라본 뒤 그 숫자를 적으면 됩니다. 높이는 0이 눈높이, 음수면 아래쪽입니다.</p>
+            <p class="ed-help">같은 배경 안의 다른 시점으로 가는 버튼입니다. 사이트 화면 오른쪽 위의 방향(°)을 보고 적으세요. 높이 0은 눈높이, 음수는 아래쪽입니다.</p>
             ${(sp.links || []).map((l, j) => `
               <div class="ed-row" style="grid-template-columns:1.4fr 1fr 1fr auto">
-                <div class="field"><label for="${fid(`world.spots.${i}.links.${j}.to`)}">갈 곳</label>
-                  <select id="${fid(`world.spots.${i}.links.${j}.to`)}" data-path="world.spots.${i}.links.${j}.to" data-kind="num" style="background:#1a1316;border:1px solid #3a2f34;color:var(--paper);padding:10px;font:inherit">
-                    ${draft.world.spots.map((t, k) => k === i ? "" : `<option value="${k}" ${+l.to === k ? "selected" : ""}>${esc(t.name || "장소 " + (k+1))}</option>`).join("")}
+                <div class="field"><label for="${fid(P+".links."+j+".to")}">갈 곳</label>
+                  <select id="${fid(P+".links."+j+".to")}" data-path="${P}.links.${j}.to" data-kind="num" style="background:#1a1316;border:1px solid #3a2f34;color:var(--paper);padding:10px;font:inherit">
+                    ${pl.spots.map((t, k) => k === i ? "" : `<option value="${k}" ${+l.to === k ? "selected" : ""}>${esc(t.name || "시점 " + (k+1))}</option>`).join("")}
                   </select></div>
-                ${input("방향 (도)", `world.spots.${i}.links.${j}.yaw`, { type:"number" })}
-                ${input("높이 (도)", `world.spots.${i}.links.${j}.pitch`, { type:"number" })}
-                ${btn("삭제","del",`world.spots.${i}.links.${j}`,"danger")}
+                ${input("방향 (도)", P+".links."+j+".yaw", { type:"number" })}
+                ${input("높이 (도)", P+".links."+j+".pitch", { type:"number" })}
+                ${btn("삭제","del",P+".links."+j,"danger")}
               </div>`).join("")}
-            <div>${draft.world.spots.length > 1 ? btn("+ 이동 버튼 추가","addlink",i) : `<span class="ed-help">장소가 두 곳 이상이면 추가할 수 있습니다.</span>`}</div>
-          </div>
-        </div>`).join("")}
-      <div>${btn("+ 장소 추가","addspot")}</div>`,
+            <div>${btn("+ 이동 버튼 추가","addlink",p+"."+i)}</div>
+          </div>` : ""}
+        </div>`; }).join("")}
+        <div>${btn("+ 시점 추가","addspot",p)}</div>
+      </div>`).join("")}
+      <div>${btn("+ 배경 추가","addplace")}</div>`,
 
     chars: () => `
       <p class="ed-help">3D 모델은 텍스처가 들어간 .glb 파일로 올려 주세요. 모델이 없으면 임시 캐릭터가 나옵니다.</p>
@@ -302,11 +315,12 @@ if (!window.CONFIG) document.body.innerHTML = '<p style="padding:40px">content.j
     if (a === "adddept") draft.credits.push({ dept:"", en:"", people:[{ name:"", roles:[], work:[] }] });
     if (a === "addperson") draft.credits[+arg].people.push({ name:"", roles:[], work:[] });
     if (a === "addchar") draft.characters.push({ name:"", desc:"", file:"" });
-    if (a === "addspot") draft.world.spots.push({ name:"", desc:"", image:"", yaw:0, links:[] });
-    if (a === "addlink"){ const sp = draft.world.spots[+arg]; const to = draft.world.spots.findIndex((_, k) => k !== +arg); (sp.links = sp.links || []).push({ to, yaw:0, pitch:-5 }); }
-    if (a === "del" && arg.startsWith("world.spots.") && arg.split(".").length === 3){
-      const gone = +arg.split(".")[2];
-      draft.world.spots.forEach(sp => { sp.links = (sp.links || []).filter(l => +l.to !== gone).map(l => ({ ...l, to: +l.to > gone ? +l.to - 1 : +l.to })); });
+    if (a === "addplace") draft.world.places.push({ name:"", desc:"", thumb:"", spots:[{ name:"", desc:"", image:"", yaw:0, links:[] }] });
+    if (a === "addspot") draft.world.places[+arg].spots.push({ name:"", desc:"", image:"", yaw:0, links:[] });
+    if (a === "addlink"){ const [p, i] = arg.split(".").map(Number); const spots = draft.world.places[p].spots; const to = spots.findIndex((_, k) => k !== i); (spots[i].links = spots[i].links || []).push({ to, yaw:0, pitch:-5 }); }
+    if (a === "del" && /^world\.places\.\d+\.spots\.\d+$/.test(arg)){
+      const ks = arg.split("."), gone = +ks[4];
+      draft.world.places[+ks[2]].spots.forEach(sp => { sp.links = (sp.links || []).filter(l => +l.to !== gone).map(l => ({ ...l, to: +l.to > gone ? +l.to - 1 : +l.to })); });
     }
     if (a === "clear"){ setAt(draft, arg, ""); if (arg.endsWith(".file")) setAt(draft, arg.replace(/file$/, "fileName"), ""); }
     render();
@@ -352,7 +366,7 @@ if (!window.CONFIG) document.body.innerHTML = '<p style="padding:40px">content.j
     const seg = location.pathname.split("/").filter(Boolean);
     if (m && seg.length && !seg[0].endsWith(".html")) return m[1] + "/" + seg[0];
     if (m) return m[1] + "/" + m[1] + ".github.io";
-    return "caplee565-hash/screening";
+    return "Obsidian-Vow/obsidian-vow.github.io";
   })();
   const tokenEl = $("#ghToken");
   try { tokenEl.value = localStorage.getItem("gh_token") || ""; } catch(e){}
@@ -400,7 +414,9 @@ if (!window.CONFIG) document.body.innerHTML = '<p style="padding:40px">content.j
     if (draft.ticket.image && !draft.ticket.front) draft.ticket.front = draft.ticket.image; delete draft.ticket.image;
     ["prefix","rows","perRow","note"].forEach(k => delete draft.ticket[k]);
     ["info","credits","characters"].forEach(k => draft[k] = draft[k] || []);
-    draft.world = Object.assign({ title:"배경", spots:[] }, draft.world);
+    draft.world = Object.assign({ title:"배경", places:[] }, draft.world);
+    if (!draft.world.places.length && draft.world.spots) draft.world.places = [{ name:draft.world.title, desc:"", thumb:"", spots:draft.world.spots }];
+    delete draft.world.spots;
     [["sound","사운드","Sound"],["thanks","감사한 분들","Special Thanks"]].forEach(([k, dept, en]) => {
       if (draft[k] && draft[k].length) draft.credits.push({ dept, en, people: draft[k].map(([r, n]) => ({ name:n, roles:[r], work:[] })) });
       delete draft[k];

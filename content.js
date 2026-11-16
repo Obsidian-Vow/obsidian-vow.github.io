@@ -26,9 +26,13 @@ window.CONFIG = {
   ],
   "world": {
     "title": "배경",
-    "spots": [
-      { "name": "입구", "desc": "장소 설명을 적어 주세요. 영상의 어느 장면에 나오는 공간인지 등.", "image": "", "yaw": 0, "links": [ { "to": 1, "yaw": 0, "pitch": -5 } ] },
-      { "name": "대성당 홀", "desc": "두 번째 장소 설명.", "image": "", "yaw": 0, "links": [ { "to": 0, "yaw": 180, "pitch": -5 } ] }
+    "places": [
+      { "name": "배경 1", "desc": "첫 번째 배경 설명을 적어 주세요.", "thumb": "", "spots": [
+        { "name": "입구", "desc": "장소 설명", "image": "", "yaw": 0, "links": [] }
+      ]},
+      { "name": "배경 2", "desc": "두 번째 배경 설명을 적어 주세요.", "thumb": "", "spots": [
+        { "name": "홀", "desc": "장소 설명", "image": "", "yaw": 0, "links": [] }
+      ]}
     ]
   },
   "credits": [

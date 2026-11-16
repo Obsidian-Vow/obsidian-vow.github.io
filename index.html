@@ -192,6 +192,22 @@ main{height:100%}
 
 
 /* ---------- 배경 (360 파노라마) ---------- */
+.w-choose{position:absolute;inset:0;z-index:4;display:none;align-content:center;justify-items:center;gap:28px;padding:80px 20px 40px;overflow-y:auto;background:radial-gradient(ellipse 60% 50% at 50% 40%,#22161a,#060405 75%)}
+.w-choose.on{display:grid}
+.w-choose header{text-align:center;display:grid;gap:6px}
+.w-choose h2{font-size:clamp(30px,4.5vw,46px)}
+.w-choose header p{margin:0;color:var(--smoke)}
+.places{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;width:min(980px,100%)}
+.place{position:relative;aspect-ratio:4/5;border:1px solid #3a2f34;background:#0b0809 center/cover no-repeat;overflow:hidden;cursor:pointer;color:var(--paper);text-align:left;padding:0;display:grid;align-content:end;transition:border-color .3s,transform .4s}
+.place::before{content:"";position:absolute;inset:0;background:linear-gradient(transparent 35%,rgba(6,4,5,.92));transition:opacity .4s}
+.place:hover,.place:focus-visible{border-color:var(--brass);transform:translateY(-4px)}
+.place .p-body{position:relative;padding:22px;display:grid;gap:6px}
+.place .p-no{font-family:var(--mono);font-size:11px;letter-spacing:.2em;color:var(--brass)}
+.place h3{font-size:28px}
+.place p{margin:0;color:var(--smoke);font-size:14px}
+.place .p-go{margin-top:8px;font-size:13px;color:var(--brass)}
+.w-switch{background:transparent;border:1px solid #3a2f34;color:var(--paper);padding:6px 12px;font-size:13px;border-radius:2px;justify-self:start}
+.w-switch:hover{border-color:var(--brass)}
 #world{padding:0;overflow:hidden;background:#000}
 #world.active{display:block}
 .pano{position:absolute;inset:0}
@@ -380,6 +396,11 @@ main{height:100%}
       <h2 id="wName"></h2>
       <p id="wDesc"></p>
       <div class="spots" id="wSpots"></div>
+      <button class="w-switch" id="wSwitch" type="button">다른 배경 고르기</button>
+    </div>
+    <div class="w-choose on" id="wChoose">
+      <header><span class="eyebrow">Background</span><h2 id="wChooseTitle">배경</h2><p>둘러볼 곳을 고르세요</p></header>
+      <div class="places" id="wPlaces"></div>
     </div>
     <div class="gate" id="gate">
       <div class="door l"></div><div class="door r"></div>
@@ -431,20 +452,47 @@ function route(){
   if (id === "ticket") runTicket(runId);
   if (id === "screening") runScreening(runId);
   if (id === "character" && window.initViewer) window.initViewer();
-  if (id === "world") runGate(runId);
+  if (id === "world") showChooser();
 }
-async function runGate(id){
-  const g = $("#gate");
-  const W = C.world || {};
-  $("#gateTitle").textContent = W.title || "배경";
+function worldData(){
+  const W = Object.assign({ title: "배경", places: [] }, C.world || {});
+  if (!W.places.length && W.spots) W.places = [{ name: W.title, desc: "", spots: W.spots }];
+  if (!W.places.length) W.places = [{ name: "배경", desc: "", spots: [{ name: "배경", image: "", yaw: 0, links: [] }] }];
+  W.places.forEach(p => { if (!p.spots || !p.spots.length) p.spots = [{ name: p.name, image: "", yaw: 0, links: [] }]; });
+  return W;
+}
+window.WORLD = worldData();
+function showChooser(){
+  const W = window.WORLD;
+  $("#wChooseTitle").textContent = W.title || "배경";
+  const box = $("#wPlaces");
+  if (!box.children.length){
+    box.innerHTML = W.places.map((p, i) => `<button class="place" type="button" data-i="${i}">
+      <div class="p-body"><span class="p-no">${String(i + 1).padStart(2, "0")}</span><h3>${esc(p.name)}</h3>${p.desc ? `<p>${esc(p.desc)}</p>` : ""}<span class="p-go">입장하기 →</span></div></button>`).join("");
+    box.querySelectorAll(".place").forEach(b => {
+      const p = W.places[+b.dataset.i], img = p.thumb || p.spots[0].image;
+      if (img) b.style.backgroundImage = `url("${img}")`;
+      else b.style.backgroundImage = "radial-gradient(ellipse at 50% 60%, #4a2a18, #120a08 70%)";
+      b.onclick = () => enterPlace(+b.dataset.i);
+    });
+  }
+  if (W.places.length === 1 && !showChooser.shown){ showChooser.shown = true; enterPlace(0); return; }
+  $("#wChoose").classList.add("on");
+}
+async function enterPlace(i){
+  const id = runId, g = $("#gate"), W = window.WORLD;
+  $("#gateTitle").textContent = W.places[i].name;
   g.classList.remove("open"); g.classList.add("on");
-  for (let i = 0; i < 50 && !window.initWorld; i++) await wait(100);
-  if (window.initWorld) window.initWorld(true);
-  await wait(1100); if (id !== runId) return;
+  await wait(60);
+  $("#wChoose").classList.remove("on");
+  for (let k = 0; k < 50 && !window.initWorld; k++) await wait(100);
+  if (window.initWorld) await window.initWorld(i);
+  await wait(900); if (id !== runId) return;
   g.classList.add("open");
   await wait(2700); if (id !== runId) return;
   g.classList.remove("on", "open");
 }
+$("#wSwitch").onclick = () => { $("#wChoose").classList.add("on"); };
 addEventListener("hashchange", route);
 function restartOpening(){
   document.querySelectorAll("#opening .curtain,#opening .logo-box,#opening .meta,#opening .cta").forEach(el => { el.style.animation = "none"; void el.offsetWidth; el.style.animation = ""; });
@@ -762,8 +810,8 @@ function setupUI(){
 if (location.hash === "#character") window.initViewer();
 
 /* ================= 배경: 360 파노라마 ================= */
-const W = Object.assign({ title: "배경", intro: "", spots: [] }, C.world || {});
-if (!W.spots.length) W.spots = [{ name: "배경", desc: "", image: "", yaw: 0, links: [] }];
+const WD = window.WORLD;
+let W = WD.places[0], wPlace = 0;
 let wr, ws, wc, meshA, meshB, wStarted = false, wCur = -1, lon = 0, lat = 0, fov = 75, auto = true, busy = false;
 const panoEl = document.getElementById("pano"), hsEl = document.getElementById("hotspots");
 const texCache = {};
@@ -792,15 +840,16 @@ function placeholderPano(i, name){
   const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; return t;
 }
 function loadPano(i){
-  if (texCache[i]) return Promise.resolve(texCache[i]);
+  const key = wPlace + "-" + i;
+  if (texCache[key]) return Promise.resolve(texCache[key]);
   const sp = W.spots[i];
   return new Promise(res => {
-    const done = t => { texCache[i] = t; res(t); };
-    if (!sp.image) return done(placeholderPano(i, sp.name));
-    new THREE.TextureLoader().load(sp.image, t => { t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; done(t); }, undefined, () => done(placeholderPano(i, sp.name)));
+    const done = t => { texCache[key] = t; res(t); };
+    if (!sp.image) return done(placeholderPano(wPlace + i, sp.name));
+    new THREE.TextureLoader().load(sp.image, t => { t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 4; done(t); }, undefined, () => done(placeholderPano(wPlace + i, sp.name)));
   });
 }
-window.initWorld = function(reset){
+window.initWorld = async function(place){
   if (!wStarted){
     wStarted = true;
     wr = new THREE.WebGLRenderer({ antialias: true });
@@ -814,13 +863,16 @@ window.initWorld = function(reset){
     meshB = new THREE.Mesh(geo, new THREE.MeshBasicMaterial({ transparent: true, opacity: 0, depthWrite: false }));
     meshB.scale.setScalar(0.98);
     ws.add(meshA, meshB);
-    buildSpots(); bindPano();
+    bindPano();
     addEventListener("resize", wResize);
-    document.getElementById("wEyebrow").textContent = W.title || "Background";
   }
+  wPlace = place || 0; W = WD.places[wPlace]; wCur = -1; busy = false; auto = true;
+  document.getElementById("wEyebrow").textContent = W.name || "Background";
+  document.getElementById("wSwitch").hidden = WD.places.length < 2;
+  buildSpots();
   wResize();
-  if (reset || wCur < 0) goSpot(0, true);
   wr.setAnimationLoop(wLoop);
+  await goSpot(0, true);
 };
 function wResize(){
   if (!wr) return;
@@ -830,6 +882,7 @@ function wResize(){
 }
 function buildSpots(){
   const box = document.getElementById("wSpots");
+  box.hidden = W.spots.length < 2;
   box.innerHTML = W.spots.map((s, i) => `<button type="button" aria-pressed="false">${s.name || "장소 " + (i + 1)}</button>`).join("");
   box.querySelectorAll("button").forEach((b, i) => b.onclick = () => goSpot(i));
   const one = W.spots.length < 2;
@@ -911,7 +964,7 @@ function wLoop(){
     b.style.display = ""; b.style.left = ((tmpV.x + 1) / 2 * w) + "px"; b.style.top = ((1 - tmpV.y) / 2 * h) + "px";
   });
 }
-if (location.hash === "#world") window.initWorld(true);
+
 </script>
 </body>
 </html>
