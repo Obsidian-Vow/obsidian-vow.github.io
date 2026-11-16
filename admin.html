@@ -104,6 +104,7 @@ button{font:inherit;cursor:pointer}
     <div class="ed-foot">
       <span class="ed-status" id="edStatus"></span>
       <button class="mini" id="edCopy" type="button">내용 복사</button>
+      <label class="upl mini" style="cursor:pointer">content.js 불러오기<input type="file" id="edImport" accept=".js,text/javascript"></label>
       <button class="mini" id="edSave" type="button">content.js 내려받기</button>
       <button id="edClose" hidden></button><button id="edCancel" hidden></button><button id="editBtn" hidden></button>
     </div>
@@ -355,6 +356,16 @@ if (!window.CONFIG) document.body.innerHTML = '<p style="padding:40px">content.j
     a.href = URL.createObjectURL(blob); a.download = "content.js"; a.click();
     say("content.js를 내려받았습니다.");
   };
+  $("#edImport").onchange = async e => {
+    const f = e.target.files[0]; if (!f) return;
+    try {
+      const fake = {}; new Function("window", await f.text())(fake);
+      if (!fake.CONFIG) throw new Error();
+      window.CONFIG = fake.CONFIG; open();
+      say("백업한 content.js를 불러왔습니다. 확인 후 ‘사이트에 게시’를 누르세요.");
+    } catch(err){ say("이 파일을 읽지 못했습니다. 관리자 페이지에서 내려받은 content.js를 골라 주세요.", true); }
+    e.target.value = "";
+  };
   $("#edCopy").onclick = async () => {
     try { await navigator.clipboard.writeText(output()); say("content.js 내용을 복사했습니다."); }
     catch(e){ say("복사하지 못했습니다. 내려받기를 이용해 주세요.", true); }
@@ -369,9 +380,15 @@ if (!window.CONFIG) document.body.innerHTML = '<p style="padding:40px">content.j
     return "Obsidian-Vow/obsidian-vow.github.io";
   })();
   const tokenEl = $("#ghToken");
-  try { tokenEl.value = localStorage.getItem("gh_token") || ""; } catch(e){}
+  try { tokenEl.value = String(localStorage.getItem("gh_token") || "").replace(/[^\x21-\x7E]/g, ""); } catch(e){}
   $("#repoName").textContent = REPO;
-  $("#saveToken").onclick = () => { try { localStorage.setItem("gh_token", tokenEl.value.trim()); say("토큰을 이 브라우저에 저장했습니다."); } catch(e){ say("저장하지 못했습니다.", true); } };
+  const cleanToken = v => String(v || "").replace(/[^\x21-\x7E]/g, "");
+  tokenEl.addEventListener("input", () => { const c = cleanToken(tokenEl.value); if (c !== tokenEl.value) tokenEl.value = c; });
+  $("#saveToken").onclick = () => {
+    const t = cleanToken(tokenEl.value); tokenEl.value = t;
+    if (t && !/^(github_pat_|ghp_)/.test(t)){ say("토큰은 github_pat_ 로 시작해야 합니다. 다시 복사해 주세요.", true); return; }
+    try { localStorage.setItem("gh_token", t); say("토큰을 이 브라우저에 저장했습니다."); } catch(e){ say("저장하지 못했습니다.", true); }
+  };
   $("#clearToken").onclick = () => { tokenEl.value = ""; try { localStorage.removeItem("gh_token"); } catch(e){} say("토큰을 지웠습니다."); };
   const b64File = f => new Promise((ok, no) => { const r = new FileReader(); r.onload = () => ok(String(r.result).split(",")[1]); r.onerror = no; r.readAsDataURL(f); });
   const b64Text = t => { const bytes = new TextEncoder().encode(t); let bin = ""; for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000)); return btoa(bin); };
@@ -391,8 +408,9 @@ if (!window.CONFIG) document.body.innerHTML = '<p style="padding:40px">content.j
     }
   }
   $("#publish").onclick = async () => {
-    const token = tokenEl.value.trim();
+    const token = cleanToken(tokenEl.value); tokenEl.value = token;
     if (!token){ say("먼저 GitHub 토큰을 넣어 주세요.", true); tokenEl.focus(); return; }
+    if (!/^(github_pat_|ghp_)/.test(token)){ say("토큰은 github_pat_ 로 시작해야 합니다. GitHub에서 다시 복사해 주세요.", true); return; }
     const btn = $("#publish"); btn.disabled = true;
     try {
       for (const [p, f] of needed){
