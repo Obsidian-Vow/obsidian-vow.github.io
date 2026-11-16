@@ -32,6 +32,9 @@ window.CONFIG = {
       ]},
       { "name": "배경 2", "desc": "두 번째 배경 설명을 적어 주세요.", "thumb": "", "spots": [
         { "name": "홀", "desc": "장소 설명", "image": "", "yaw": 0, "links": [] }
+      ]},
+      { "name": "배경 3", "desc": "세 번째 배경 설명을 적어 주세요.", "thumb": "", "spots": [
+        { "name": "시점 1", "desc": "장소 설명", "image": "", "yaw": 0, "links": [] }
       ]}
     ]
   },
