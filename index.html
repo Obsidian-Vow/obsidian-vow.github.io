@@ -96,9 +96,24 @@ main{height:100%}
 #ticket.printing .tk{animation:printOut 3s cubic-bezier(.35,.05,.2,1) .4s forwards}
 @keyframes printOut{0%{transform:translateY(-102%)}18%{transform:translateY(-84%)}30%{transform:translateY(-82%)}100%{transform:translateY(0)}}
 #ticket.shine .face.front::after{animation:shine 1.2s ease forwards}
-#ticket.back .flip{transform:rotateY(180deg) scale(1.03)}
-#ticket.back .face.back::after{animation:shine 1.2s ease .9s forwards}
-#ticket.round .flip{transform:rotateY(360deg)}
+/* 양면 티켓 3D 회전 */
+.edge{position:absolute;top:calc(var(--tw) * .03);bottom:calc(var(--tw) * .03);width:4px;margin-left:-2px;background:linear-gradient(#5a4026,#2a1d12 50%,#5a4026);transform:rotateY(90deg)}
+.edge.l{left:0}.edge.r{left:100%}
+.face .shade{position:absolute;inset:0;background:#000;opacity:0;pointer-events:none}
+#ticket.spin .clip{overflow:visible}
+#ticket.spin .flip{animation:spin3d 9s cubic-bezier(.42,0,.58,1) .6s forwards}
+#ticket.spin .face.front .shade{animation:shadeF 9s cubic-bezier(.42,0,.58,1) .6s forwards}
+#ticket.spin .face.back .shade{animation:shadeB 9s cubic-bezier(.42,0,.58,1) .6s forwards}
+@keyframes spin3d{
+  0%{transform:translateY(0) rotateX(0) rotateY(0) rotateZ(0)}
+  10%{transform:translateY(26px) rotateX(3deg) rotateY(36deg) rotateZ(-.5deg)}
+  25%{transform:translateY(30px) rotateX(7deg) rotateY(90deg) rotateZ(-1deg)}
+  50%{transform:translateY(30px) rotateX(4deg) rotateY(180deg) rotateZ(0)}
+  75%{transform:translateY(30px) rotateX(-6deg) rotateY(270deg) rotateZ(1deg)}
+  90%{transform:translateY(26px) rotateX(-3deg) rotateY(324deg) rotateZ(.5deg)}
+  100%{transform:translateY(0) rotateX(0) rotateY(360deg) rotateZ(0)}}
+@keyframes shadeF{0%{opacity:0}25%{opacity:.6}75%{opacity:.6}100%{opacity:0}}
+@keyframes shadeB{0%{opacity:.6}25%{opacity:.6}50%{opacity:0}75%{opacity:.6}100%{opacity:.6}}
 @keyframes shine{to{transform:translateX(120%)}}
 #ticket.taken .tk{animation:takeAway 1.1s cubic-bezier(.5,0,.7,.4) forwards}
 @keyframes takeAway{0%{transform:translateY(0)}25%{transform:translateY(-8px) rotate(-1deg)}100%{transform:translateY(70vh) rotate(-8deg) scale(.9);opacity:0}}
@@ -388,28 +403,30 @@ const flip = $("#flip");
   const front = T.front || T.image, back = T.back;
   const face = (cls, src) => {
     const f = document.createElement("div"); f.className = "face " + cls;
+    const shade = document.createElement("div"); shade.className = "shade";
     if (src){ const img = new Image(); img.alt = cls === "front" ? "티켓 앞면" : "티켓 뒷면"; img.src = src; img.onerror = () => { img.remove(); f.append(defaultTicket()); }; f.append(img); }
     else f.append(defaultTicket());
+    f.append(shade);
     flip.append(f);
   };
   face("front", front); face("back", back);
+  ["l","r"].forEach(k => { const e = document.createElement("div"); e.className = "edge " + k; flip.append(e); });
 })();
 async function runTicket(id){
   const v = $("#ticket"), st = $("#tkStatus");
   const ok = () => id === runId;
-  v.classList.remove("printing", "shine", "back", "round", "taken");
+  v.classList.remove("printing", "shine", "spin", "taken");
   flip.style.transition = "none"; void v.offsetWidth; flip.style.transition = "";
   st.textContent = "티켓을 발권하고 있습니다";
   v.classList.add("printing");
   await wait(3500); if (!ok()) return;
   v.classList.add("shine");
   st.innerHTML = "발권 완료";
-  await wait(1100); if (!ok()) return;
-  v.classList.add("back");
-  await wait(3000); if (!ok()) return;
-  v.classList.add("round");
+  await wait(1000); if (!ok()) return;
+  v.classList.add("spin");
+  await wait(9800); if (!ok()) return;
   st.innerHTML = "<b>" + esc((C.ticket && C.ticket.hall) || "상영관") + "</b>으로 입장합니다";
-  await wait(2000); if (!ok()) return;
+  await wait(1400); if (!ok()) return;
   v.classList.add("taken");
   await wait(700); if (!ok()) return;
   await fade(true);
