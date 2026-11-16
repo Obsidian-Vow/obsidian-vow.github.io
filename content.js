@@ -85,8 +85,16 @@ window.CONFIG = {
       {
         "name": "교회",
         "desc": "",
-        "thumb": "",
-        "spots": []
+        "thumb": "assets/church-thumb.jpg",
+        "spots": [],
+        "model": "assets/church.glb",
+        "yaw": 90,
+        "pitch": -4,
+        "start": [
+          0.5,
+          0.2,
+          0.8
+        ]
       },
       {
         "name": "보스룸",
