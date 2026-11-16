@@ -49,7 +49,7 @@ window.CONFIG = {
     {
       "name": "유영 몬스터",
       "desc": "",
-      "file": ""
+      "file": "assets/flying_monster.glb"
     },
     {
       "name": "스켈레톤",
