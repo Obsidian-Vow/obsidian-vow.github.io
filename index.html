@@ -183,6 +183,8 @@ main{height:100%}
 .tool-row button,.tool-row a{background:transparent;border:1px solid #3a2f34;color:var(--paper);padding:8px 12px;border-radius:2px;font-size:13px;text-decoration:none}
 .tool-row button:hover,.tool-row a:hover{border-color:var(--brass)}
 .tool-row button[aria-pressed="true"]{background:var(--brass);color:var(--ink);border-color:var(--brass)}
+.bright{display:flex;align-items:center;gap:10px;margin-top:10px;font-size:13px;color:var(--smoke)}
+.bright input{flex:1;accent-color:var(--brass)}
 .panel-label{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--smoke);margin-bottom:8px}
 .viewport{position:relative;min-height:0}
 .viewport canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
@@ -387,6 +389,7 @@ main{height:100%}
           <button type="button" id="lightBtn" aria-pressed="false">림 라이트</button>
           <button type="button" id="wireBtn" aria-pressed="false">와이어프레임</button>
         </div>
+        <label class="bright" for="brightRange">밝기 <input type="range" id="brightRange" min="0.6" max="2.6" step="0.05" value="1.35"></label>
       </div>
       <div class="tool-row hide-sm">
         <a href="#world">배경 둘러보기</a>
@@ -690,6 +693,7 @@ route();
 import * as THREE from "three";
 import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
 
 const C = window.CONFIG;
 const vp = document.getElementById("viewport");
@@ -704,6 +708,7 @@ window.initViewer = function(){
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.35;
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   vp.prepend(renderer.domElement);
@@ -719,17 +724,22 @@ window.initViewer = function(){
   controls.autoRotate = !reduce; controls.autoRotateSpeed = 1.6;
   document.getElementById("autoRot").setAttribute("aria-pressed", String(!reduce));
 
-  scene.add(new THREE.HemisphereLight(0xf1e8d6, 0x2a1418, 0.7));
-  const key = new THREE.DirectionalLight(0xfff1dc, 2.2);
+  // 금속·거친 재질이 검게 보이지 않도록 주변 반사광(환경맵)을 넣음
+  const pm = new THREE.PMREMGenerator(renderer);
+  scene.environment = pm.fromScene(new RoomEnvironment(), 0.04).texture;
+  scene.environmentIntensity = 0.9;
+  scene.add(new THREE.HemisphereLight(0xf1e8d6, 0x3a2420, 1.4));
+  const front = new THREE.DirectionalLight(0xffffff, 1.2); camera.add(front); front.position.set(0, 0.5, 1); scene.add(camera);
+  const key = new THREE.DirectionalLight(0xfff1dc, 2.8);
   key.position.set(3, 5, 4); key.castShadow = true; key.shadow.mapSize.set(1024, 1024);
   Object.assign(key.shadow.camera, { left: -3, right: 3, top: 3, bottom: -3 });
   scene.add(key);
-  const fill = new THREE.DirectionalLight(0xc9d6ff, 0.5); fill.position.set(-4, 2, 2); scene.add(fill);
+  const fill = new THREE.DirectionalLight(0xc9d6ff, 1.0); fill.position.set(-4, 2, 2); scene.add(fill);
   rim = new THREE.DirectionalLight(0xd1a85e, 0); rim.position.set(0, 3, -5); scene.add(rim);
 
   const ground = new THREE.Mesh(new THREE.PlaneGeometry(30, 30), new THREE.ShadowMaterial({ opacity: 0.45 }));
   ground.rotation.x = -Math.PI / 2; ground.receiveShadow = true; scene.add(ground);
-  const ped = new THREE.Mesh(new THREE.CylinderGeometry(1.1, 1.18, 0.08, 64), new THREE.MeshStandardMaterial({ color: 0x1d1518, roughness: 0.6, metalness: 0.2 }));
+  const ped = new THREE.Mesh(new THREE.CylinderGeometry(1.1, 1.18, 0.08, 64), new THREE.MeshStandardMaterial({ color: 0x1d1518, roughness: 0.75, metalness: 0.1, envMapIntensity: 0.15 }));
   ped.position.y = -0.04; ped.receiveShadow = true; scene.add(ped);
   const ring = new THREE.Mesh(new THREE.TorusGeometry(1.14, 0.008, 8, 128), new THREE.MeshBasicMaterial({ color: 0xd1a85e }));
   ring.rotation.x = Math.PI / 2; scene.add(ring);
@@ -822,12 +832,14 @@ function placeholder(i){
 function applyWire(){ if (current) current.traverse(m => { if (m.isMesh) [].concat(m.material).forEach(mt => { if ("wireframe" in mt) mt.wireframe = wire; }); }); }
 function setAuto(on){ controls.autoRotate = on; document.getElementById("autoRot").setAttribute("aria-pressed", String(on)); }
 function setupUI(){
-  document.querySelectorAll("[data-view]").forEach(b => b.onclick = () => setView(b.dataset.view === "top" ? "top" : +b.dataset.view));
+  document.querySelectorAll(".c-panel button[data-view]").forEach(b => b.onclick = e => { e.stopPropagation(); setView(b.dataset.view === "top" ? "top" : +b.dataset.view); });
   document.getElementById("resetCam").onclick = home;
   document.getElementById("autoRot").onclick = () => setAuto(!controls.autoRotate);
   document.getElementById("lightBtn").onclick = e => { const on = rim.intensity === 0; rim.intensity = on ? 3 : 0; e.currentTarget.setAttribute("aria-pressed", String(on)); };
   document.getElementById("wireBtn").onclick = e => { wire = !wire; applyWire(); e.currentTarget.setAttribute("aria-pressed", String(wire)); };
   renderer.domElement.addEventListener("pointerdown", () => setAuto(false));
+  const br = document.getElementById("brightRange");
+  br.oninput = () => { renderer.toneMappingExposure = +br.value; };
 }
 if (location.hash === "#character") window.initViewer();
 
