@@ -63,7 +63,7 @@ window.CONFIG = {
       {
         "name": "성 홀",
         "desc": "첫 번째 배경 설명을 적어 주세요.",
-        "thumb": "",
+        "thumb": "assets/castlehall-thumb.jpg",
         "spots": [
           {
             "name": "입구",
@@ -72,6 +72,14 @@ window.CONFIG = {
             "yaw": 0,
             "links": []
           }
+        ],
+        "model": "assets/castle_hall.glb",
+        "yaw": 270,
+        "pitch": 3,
+        "start": [
+          0.5,
+          0.17,
+          0.15
         ]
       },
       {

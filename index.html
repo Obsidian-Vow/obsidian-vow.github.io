@@ -948,10 +948,11 @@ async function showModel(P){
   ws.environment = ws.userData.env; ws.environmentIntensity = 0.6;
   wr.toneMapping = THREE.ACESFilmicToneMapping; wr.toneMappingExposure = +P.exposure || 1.25;
   const box = new THREE.Box3().setFromObject(obj), sz = box.getSize(new THREE.Vector3()), c = box.getCenter(new THREE.Vector3());
-  eye.set(c.x, box.min.y + sz.y * (+P.eye || 0.35), c.z);
+  const st = Array.isArray(P.start) ? P.start : [0.5, +P.eye || 0.35, 0.5];
+  eye.set(box.min.x + sz.x * st[0], box.min.y + sz.y * st[1], box.min.z + sz.z * st[2]);
   modelLights.children[1].position.set(c.x, box.min.y + sz.y * 0.55, c.z);
   wc.near = Math.max(0.005, sz.length() / 2000); wc.far = sz.length() * 4; wc.position.copy(eye);
-  lon = +P.yaw || 0; lat = -12; fov = 75;
+  lon = +P.yaw || 0; lat = (P.pitch ?? -12); fov = 75;
   document.getElementById("wName").textContent = P.name || "";
   document.getElementById("wDesc").textContent = P.desc || "";
   document.getElementById("wSpots").hidden = true;
