@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>상영관 사이트 편집</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@700;900&family=IBM+Plex+Sans+KR:wght@400;500;600&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  /* 레이아웃: 극장 한 관을 순서대로 지나가는 다섯 개의 방 (오프닝 → 매표소 → 상영관 → 크레딧 → 전시실) */
+  --ink:#100c0e;        /* 객석의 어둠 */
+  --velvet:#6a1625;     /* 커튼 */
+  --brass:#d1a85e;      /* 황동 장식, 강조 */
+  --paper:#f1e8d6;      /* 티켓 종이 */
+  --smoke:#9a9096;      /* 보조 텍스트 */
+  --line:#2c2428;
+  --display:"Noto Serif KR","Nanum Myeongjo",Georgia,serif;
+  --body:"IBM Plex Sans KR","Apple SD Gothic Neo","Malgun Gothic",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--ink);color:var(--paper);font-family:var(--body);font-size:16px;line-height:1.6;-webkit-font-smoothing:antialiased;overflow:hidden}
+h1,h2,h3{font-family:var(--display);text-wrap:balance;margin:0;line-height:1.2}
+button{font:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--brass);outline-offset:3px}
+img{max-width:100%}
+
+
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--ink);color:var(--paper);font-family:var(--body);line-height:1.6}
+h1,h2{font-family:var(--display);margin:0;line-height:1.25}
+button{font:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--brass);outline-offset:3px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:11px 20px;border-radius:2px;border:1px solid var(--brass);background:var(--brass);color:var(--ink);font-weight:600}
+.btn.ghost{background:transparent;color:var(--paper);border-color:#4a3e44}
+.field{display:grid;gap:6px}
+.field label{font-size:13px;color:var(--smoke)}
+.field input{background:#1a1316;border:1px solid #3a2f34;color:var(--paper);padding:10px 12px;font:inherit;border-radius:2px}
+.field input:focus{border-color:var(--brass);outline:none}
+/* ---------- 편집 모드 (소유자에게만 보임) ---------- */
+.edit-btn{margin-left:8px;background:transparent;border:1px solid var(--brass);color:var(--brass);padding:6px 14px;border-radius:999px;font-size:13px;white-space:nowrap}
+.edit-btn:hover{background:var(--brass);color:var(--ink)}
+.editor{position:fixed;inset:0;z-index:100;display:none;background:rgba(5,3,4,.6)}
+.editor.on{display:block}
+.ed-panel{position:absolute;top:0;right:0;bottom:0;width:min(560px,100%);background:#151013;border-left:1px solid var(--line);display:grid;grid-template-rows:auto auto 1fr auto}
+.ed-head{padding:18px 20px 10px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+.ed-head h2{font-size:22px}
+.ed-tabs{display:flex;gap:4px;padding:0 20px;border-bottom:1px solid var(--line);overflow-x:auto}
+.ed-tabs button{background:none;border:none;border-bottom:2px solid transparent;color:var(--smoke);padding:10px 12px;white-space:nowrap}
+.ed-tabs button[aria-selected="true"]{color:var(--paper);border-color:var(--brass)}
+.ed-body{overflow-y:auto;padding:20px;display:grid;gap:18px;align-content:start}
+.ed-body .field textarea{background:#1a1316;border:1px solid #3a2f34;color:var(--paper);padding:10px 12px;font:inherit;border-radius:2px;resize:vertical;min-height:72px}
+.ed-body .field textarea:focus{border-color:var(--brass);outline:none}
+.ed-help{font-size:13px;color:var(--smoke);margin:0}
+.ed-card{border:1px solid var(--line);background:#1a1316;padding:16px;display:grid;gap:12px}
+.ed-card.inner{background:#120d10}
+.ed-row{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;align-items:end}
+.ed-row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.ed-bar{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.ed-bar .grow{flex:1;font-family:var(--display);font-weight:700}
+.mini{background:transparent;border:1px solid #3a2f34;color:var(--paper);padding:6px 10px;border-radius:2px;font-size:12px}
+.mini:hover{border-color:var(--brass)}
+.mini.danger:hover{border-color:#d0645a;color:#e38a80}
+.ed-media{display:grid;grid-template-columns:140px 1fr;gap:14px;align-items:center}
+.ed-media .pv{aspect-ratio:16/9;background:#0b0809;border:1px solid var(--line);display:grid;place-items:center;overflow:hidden;font-size:12px;color:var(--smoke)}
+.ed-media .pv img,.ed-media .pv video{max-width:100%;max-height:100%}
+.ed-foot{padding:14px 20px;border-top:1px solid var(--line);display:flex;gap:10px;align-items:center;justify-content:flex-end;flex-wrap:wrap}
+.ed-status{margin-right:auto;font-size:13px;color:var(--smoke)}
+.ed-status.err{color:#e38a80}
+.upl{display:inline-flex}
+.upl input{display:none}
+
+
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:0;min-height:100vh}
+.editor{position:static;display:block;background:none}
+.ed-panel{position:static;width:auto;height:100vh;border-left:none;border-right:1px solid var(--line)}
+.guide{padding:28px 24px;display:grid;gap:18px;align-content:start;position:sticky;top:0;height:100vh;overflow-y:auto}
+.guide ol{margin:0;padding-left:20px;display:grid;gap:10px;color:var(--smoke);font-size:14px}
+.guide ol b{color:var(--paper)}
+.guide ul{margin:0;padding-left:18px;font-size:14px;display:grid;gap:4px}
+.guide code{font-family:var(--mono);font-size:12px;color:var(--brass)}
+.eyebrow{font-family:var(--mono);font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--brass)}
+@media (max-width:900px){.layout{grid-template-columns:1fr}.ed-panel{height:auto;border-right:none}.ed-body{overflow:visible}.guide{position:static;height:auto}}
+</style>
+</head>
+<body>
+<div class="layout">
+<div class="editor on" id="editor">
+  <div class="ed-panel">
+    <div class="ed-head"><h2>사이트 내용 편집</h2><a class="mini" href="index.html" style="text-decoration:none">사이트 보기 →</a></div>
+    <div class="ed-tabs" role="tablist" id="edTabs">
+      <button type="button" data-tab="basic">작품 정보</button>
+      <button type="button" data-tab="media">로고 · 영상</button>
+      <button type="button" data-tab="ticket">티켓</button>
+      <button type="button" data-tab="credits">크레딧</button>
+      <button type="button" data-tab="chars">캐릭터</button>
+    </div>
+    <div class="ed-body" id="edBody"></div>
+    <div class="ed-foot">
+      <span class="ed-status" id="edStatus"></span>
+      <button class="btn ghost" id="edCopy" type="button">내용 복사</button>
+      <button class="btn" id="edSave" type="button">content.js 내려받기</button>
+      <button id="edClose" hidden></button><button id="edCancel" hidden></button><button id="editBtn" hidden></button>
+    </div>
+  </div>
+</div>
+<aside class="guide">
+  <div><span class="eyebrow">반영하는 방법</span><h2 style="font-size:22px;margin-top:6px">편집 → 내려받기 → 올리기</h2></div>
+  <ol>
+    <li>왼쪽에서 내용을 고칩니다. 지금 사이트에 올라가 있는 내용이 불러와져 있습니다.</li>
+    <li><b>content.js 내려받기</b>를 누릅니다.</li>
+    <li>GitHub 저장소 페이지에서 <b>Add file → Upload files</b>로 내려받은 <code>content.js</code>를 올리고 <b>Commit changes</b>를 누릅니다. 같은 이름 파일은 덮어써집니다.</li>
+    <li>새로 고른 파일이 있으면 <code>assets</code> 폴더를 연 다음 같은 방법으로 올립니다.</li>
+    <li>1~2분 뒤 사이트를 새로고침하면 반영됩니다.</li>
+  </ol>
+  <div><div class="eyebrow" style="margin-bottom:8px">assets 폴더에 올릴 파일</div><ul id="need"></ul></div>
+  <p class="ed-help">이 편집 페이지는 내용 파일을 만들어 줄 뿐, 사이트를 직접 바꾸지는 않습니다. 그래서 주소를 아는 사람이 열어 봐도 사이트에는 아무 영향이 없습니다.</p>
+</aside>
+</div>
+<script src="content.js"></script>
+<script>
+if (!window.CONFIG) document.body.innerHTML = '<p style="padding:40px">content.js를 찾지 못했습니다. admin.html과 같은 폴더에 content.js가 있어야 합니다.</p>';
+</script>
+<script>
+(function(){
+  const $ = s => document.querySelector(s);
+  const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const ED = $("#editor"), body = $("#edBody"), status = $("#edStatus");
+  let draft, tab = "basic", busy = false;
+
+  const say = (msg, err) => { status.textContent = msg; status.classList.toggle("err", !!err); };
+  const getAt = (o, p) => p.split(".").reduce((a, k) => a?.[k], o);
+  function setAt(o, p, v){ const ks = p.split("."); const last = ks.pop(); const t = ks.reduce((a, k) => a[k], o); t[last] = v; }
+  const fid = p => "f_" + p.replace(/\./g, "_");
+
+  function input(label, path, opt = {}){
+    const v = getAt(draft, path);
+    const val = opt.kind === "csv" ? (v || []).join(", ") : opt.kind === "lines" ? (v || []).join("\n") : (v ?? "");
+    const tag = opt.area || opt.kind === "lines"
+      ? `<textarea id="${fid(path)}" data-path="${path}" data-kind="${opt.kind||""}" rows="${opt.rows||3}" placeholder="${esc(opt.ph||"")}">${esc(val)}</textarea>`
+      : `<input id="${fid(path)}" data-path="${path}" data-kind="${opt.kind||""}" value="${esc(val)}" placeholder="${esc(opt.ph||"")}" ${opt.type?`type="${opt.type}"`:""}>`;
+    return `<div class="field"><label for="${fid(path)}">${esc(label)}</label>${tag}</div>`;
+  }
+  const btn = (txt, act, arg = "", cls = "") => `<button type="button" class="mini ${cls}" data-act="${act}" data-arg="${arg}">${txt}</button>`;
+  const pairRows = (key, l1, l2) => `
+    ${draft[key].map((_, i) => `<div class="ed-row">${input(l1, `${key}.${i}.0`)}${input(l2, `${key}.${i}.1`)}${btn("삭제","del",`${key}.${i}`,"danger")}</div>`).join("")}
+    <div>${btn("+ 항목 추가","addpair",key)}</div>`;
+
+  const TABS = {
+    basic: () => `
+      ${input("작품 제목", "title")}
+      ${input("영문 제목", "titleEn")}
+      ${input("행사 이름 (오프닝·티켓에 표시)", "event")}
+      ${input("한 줄 소개 (오프닝 로고 아래)", "subtitle")}
+      ${input("시놉시스 (크레딧 페이지 첫머리)", "synopsis", { area:true, rows:4 })}
+      <div class="ed-card"><strong>작품 정보 표</strong><p class="ed-help">크레딧 페이지 오른쪽에 나오는 항목입니다.</p>${pairRows("info","항목","내용")}</div>`,
+
+    media: () => `
+      <div class="ed-card">
+        <strong>로고</strong>
+        <p class="ed-help">배경이 투명한 PNG를 추천합니다. 파일을 고르면 경로가 자동으로 적힙니다. 고른 파일은 사이트의 assets 폴더에 같은 이름으로 올려 주세요.</p>
+        <div class="ed-media">
+          <div class="pv">${preview.logo ? `<img src="${esc(preview.logo)}" alt="로고 미리보기">` : esc(draft.logo || "없음")}</div>
+          <div class="ed-bar">
+            <label class="upl mini">이미지 선택<input type="file" accept="image/*" data-upload="logo"></label>
+          </div>
+        </div>
+        ${input("로고 경로", "logo", { ph:"assets/logo.png" })}
+      </div>
+      <div class="ed-card">
+        <strong>상영 영상</strong>
+        <p class="ed-help">유튜브 주소를 넣거나(용량 제한 없음, 추천), mp4 파일을 골라 assets 폴더에 올립니다. 유튜브는 ‘일부 공개’로 올려도 재생됩니다.</p>
+        ${input("유튜브 주소 또는 영상 파일 경로", "video", { ph:"https://youtu.be/xxxxxxxxxxx" })}
+        <div class="ed-bar"><label class="upl mini">mp4 파일 선택<input type="file" accept="video/mp4,video/webm" data-upload="video"></label></div>
+      </div>`,
+
+    ticket: () => `
+      <p class="ed-help">관람객이 발권할 때 찍혀 나오는 내용입니다. 이름과 좌석은 관람객마다 자동으로 정해집니다.</p>
+      <div class="ed-row2">${input("상영관 이름", "ticket.hall", { ph:"제1상영관" })}${input("러닝타임", "ticket.runtime", { ph:"05:00" })}</div>
+      <div class="ed-row2">${input("티켓 번호 앞 글자", "ticket.prefix", { ph:"BC" })}${input("한 줄 좌석 수", "ticket.perRow", { type:"number" })}</div>
+      ${input("좌석 줄 (글자마다 한 줄)", "ticket.rows", { ph:"ABCDEFGH" })}
+      ${input("티켓 하단 문구", "ticket.note", { ph:"상영 중 촬영과 통화는 삼가 주세요" })}`,
+
+    credits: () => `
+      <p class="ed-help">역할은 쉼표로, 상세 작업은 줄바꿈으로 구분합니다.</p>
+      ${draft.credits.map((d, i) => `
+        <div class="ed-card">
+          <div class="ed-bar"><span class="grow">${esc(d.dept || "새 부서")}</span>${btn("↑","up",`credits.${i}`)}${btn("↓","down",`credits.${i}`)}${btn("부서 삭제","del",`credits.${i}`,"danger")}</div>
+          <div class="ed-row2">${input("부서 이름", `credits.${i}.dept`)}${input("영문 (작게 표시)", `credits.${i}.en`)}</div>
+          ${d.people.map((p, j) => `
+            <div class="ed-card inner">
+              <div class="ed-bar"><span class="grow">${esc(p.name || "새 사람")}</span>${btn("↑","up",`credits.${i}.people.${j}`)}${btn("↓","down",`credits.${i}.people.${j}`)}${btn("삭제","del",`credits.${i}.people.${j}`,"danger")}</div>
+              ${input("이름", `credits.${i}.people.${j}.name`)}
+              ${input("역할", `credits.${i}.people.${j}.roles`, { kind:"csv", ph:"애니메이션, 편집" })}
+              ${input("상세 작업", `credits.${i}.people.${j}.work`, { kind:"lines", rows:3 })}
+            </div>`).join("")}
+          <div>${btn("+ 사람 추가","addperson",i)}</div>
+        </div>`).join("")}
+      <div>${btn("+ 부서 추가","adddept")}</div>
+      <div class="ed-card"><strong>사운드</strong>${pairRows("sound","역할","이름 / 업체")}</div>
+      <div class="ed-card"><strong>감사한 분들</strong>${pairRows("thanks","관계","이름")}</div>`,
+
+    chars: () => `
+      <p class="ed-help">3D 모델은 텍스처가 들어간 .glb 파일로 올려 주세요. 모델이 없으면 임시 캐릭터가 나옵니다.</p>
+      ${draft.characters.map((c, i) => `
+        <div class="ed-card">
+          <div class="ed-bar"><span class="grow">${esc(c.name || "새 캐릭터")}</span>${btn("↑","up",`characters.${i}`)}${btn("↓","down",`characters.${i}`)}${btn("삭제","del",`characters.${i}`,"danger")}</div>
+          ${input("이름", `characters.${i}.name`)}
+          ${input("소개", `characters.${i}.desc`, { area:true })}
+          <div class="ed-bar">
+            <label class="upl mini">GLB 선택<input type="file" accept=".glb,.gltf" data-upload="characters.${i}.file"></label>
+          </div>
+          ${input("모델 경로 (비워 두면 임시 캐릭터)", `characters.${i}.file`, { ph:"assets/hero.glb" })}
+          <div>
+          </div>
+        </div>`).join("")}
+      <div>${btn("+ 캐릭터 추가","addchar")}</div>`
+  };
+
+  function render(){
+    document.querySelectorAll("#edTabs button").forEach(b => b.setAttribute("aria-selected", String(b.dataset.tab === tab)));
+    const y = body.scrollTop;
+    body.innerHTML = TABS[tab]();
+    body.scrollTop = y;
+  }
+
+  body.addEventListener("input", e => {
+    const el = e.target, p = el.dataset.path; if (!p) return;
+    let v = el.value;
+    if (el.dataset.kind === "csv") v = v.split(",").map(x => x.trim()).filter(Boolean);
+    else if (el.dataset.kind === "lines") v = v.split("\n").map(x => x.trim()).filter(Boolean);
+    else if (el.type === "number") v = +v;
+    setAt(draft, p, v);
+  });
+
+  body.addEventListener("click", e => {
+    const b = e.target.closest("[data-act]"); if (!b) return;
+    const a = b.dataset.act, arg = b.dataset.arg;
+    const parentOf = p => { const ks = p.split("."); const i = +ks.pop(); return [getAt(draft, ks.join(".")), i]; };
+    if (a === "del"){ const [arr, i] = parentOf(arg); arr.splice(i, 1); }
+    if (a === "up" || a === "down"){ const [arr, i] = parentOf(arg); const j = a === "up" ? i - 1 : i + 1; if (j >= 0 && j < arr.length) [arr[i], arr[j]] = [arr[j], arr[i]]; }
+    if (a === "addpair") draft[arg].push(["", ""]);
+    if (a === "adddept") draft.credits.push({ dept:"", en:"", people:[{ name:"", roles:[], work:[] }] });
+    if (a === "addperson") draft.credits[+arg].people.push({ name:"", roles:[], work:[] });
+    if (a === "addchar") draft.characters.push({ name:"", desc:"", file:"" });
+    if (a === "clear"){ setAt(draft, arg, ""); if (arg.endsWith(".file")) setAt(draft, arg.replace(/file$/, "fileName"), ""); }
+    render();
+  });
+
+  const preview = {};
+  const needed = new Map();   // 경로 -> 파일 크기
+  body.addEventListener("change", e => {
+    const el = e.target, key = el.dataset.upload; if (!key || !el.files[0]) return;
+    const f = el.files[0], path = "assets/" + f.name.replace(/\s+/g, "-");
+    setAt(draft, key, path);
+    if (key === "logo") preview.logo = URL.createObjectURL(f);
+    needed.set(path, { name: f.name, size: f.size });
+    say(`‘${f.name}’ → assets 폴더에 ${path.slice(7)} 이름으로 올려 주세요.`);
+    render(); renderOut();
+  });
+
+  const MB = 1024 * 1024;
+  function output(){
+    return "/* admin.html 에서 만든 파일입니다. */\nwindow.CONFIG = " + JSON.stringify(draft, null, 2) + ";\n";
+  }
+  function renderOut(){
+    const box = $("#need");
+    box.innerHTML = needed.size
+      ? [...needed].map(([p, f]) => `<li><code>${esc(p)}</code> <small>${(f.size/MB).toFixed(1)}MB${f.size > 25*MB ? " · GitHub 웹 업로드 한도(25MB) 초과" : ""}</small></li>`).join("")
+      : "<li><small>이번에 새로 고른 파일이 없습니다.</small></li>";
+  }
+  $("#edSave").onclick = () => {
+    const blob = new Blob([output()], { type: "text/javascript" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob); a.download = "content.js"; a.click();
+    say("content.js를 내려받았습니다. 아래 순서대로 사이트에 올려 주세요.");
+  };
+  $("#edCopy").onclick = async () => {
+    try { await navigator.clipboard.writeText(output()); say("content.js 내용을 복사했습니다."); }
+    catch(e){ say("복사하지 못했습니다. 내려받기를 이용해 주세요.", true); }
+  };
+
+  function open(){
+    draft = JSON.parse(JSON.stringify(window.CONFIG));
+    draft.ticket = Object.assign({ hall:"제1상영관", runtime:"05:00", prefix:"BC", rows:"ABCDEFGH", perRow:12, note:"" }, draft.ticket);
+    ["info","sound","thanks","credits","characters"].forEach(k => draft[k] = draft[k] || []);
+    say("내용을 고친 뒤 content.js를 내려받으세요.");
+    render(); ED.classList.add("on");
+  }
+  const close = () => {};
+  $("#editBtn").onclick = open;
+  $("#edClose").onclick = close;
+  $("#edCancel").onclick = close;
+  document.querySelectorAll("#edTabs button").forEach(b => b.onclick = () => { tab = b.dataset.tab; render(); });
+
+  open();
+  renderOut();
+})();
+</script>
+</body>
+</html>
